@@ -37,7 +37,12 @@ export default function LoginPage() {
       const result = data?.result;
 
       if (!result || result?.error) {
-        setError(result?.error?.message || 'Email atau password salah.');
+        const errorMsg = result?.error?.data?.message || result?.error?.message || '';
+        if (errorMsg.includes('Access Denied')) {
+          setError('Email atau Password yang Anda masukkan salah.');
+        } else {
+          setError(errorMsg || 'Email atau password salah.');
+        }
         return;
       }
 

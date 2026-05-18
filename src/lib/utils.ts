@@ -35,3 +35,21 @@ export function formatDateTime(dateStr: string): string {
     minute: '2-digit',
   }).format(date);
 }
+
+export function odooToUtc(dateStr: string): string {
+  if (!dateStr) return '';
+  if (dateStr.includes('T')) return dateStr;
+  return dateStr.replace(' ', 'T') + 'Z';
+}
+
+export function formatFullDateTime(dateStr: string): string {
+  if (!dateStr) return '-';
+  const date = new Date(odooToUtc(dateStr));
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date) + ' WIB'; // Assume WIB as local for display context
+}

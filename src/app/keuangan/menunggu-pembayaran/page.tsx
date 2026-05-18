@@ -7,7 +7,7 @@ import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
 import CountdownTimer from '@/components/CountdownTimer';
 import PanduanPembayaran from '@/components/PanduanPembayaran';
-import { formatRupiah } from '@/lib/utils';
+import { formatRupiah, formatFullDateTime } from '@/lib/utils';
 
 function MenungguContent() {
   const searchParams = useSearchParams();
@@ -70,6 +70,9 @@ function MenungguContent() {
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
                 <CountdownTimer targetDateStr={p.tanggal_expired} />
               </div>
+              <p style={{ textAlign: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-high)', marginBottom: '16px', background: '#F8FAFC', padding: '8px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                Batas Waktu: {formatFullDateTime(p.tanggal_expired)}
+              </p>
               
               <PanduanPembayaran />
             </div>

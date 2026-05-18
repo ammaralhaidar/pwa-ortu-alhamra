@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { odooToUtc } from '@/lib/utils';
 
 interface CountdownTimerProps {
   targetDateStr: string; // ISO datetime string
@@ -12,7 +13,7 @@ export default function CountdownTimer({ targetDateStr }: CountdownTimerProps) {
 
   useEffect(() => {
     const calculate = () => {
-      const target = new Date(targetDateStr).getTime();
+      const target = new Date(odooToUtc(targetDateStr)).getTime();
       const now = Date.now();
       const diff = target - now;
 
