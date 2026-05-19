@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
 import { getActiveSiswaId } from '@/lib/auth';
@@ -294,6 +295,14 @@ export default function TagihanPage() {
         </div>
       )}
 
+      {submitting && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(15,54,89,0.85)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+          <Loader2 size={48} color="#fff" strokeWidth={2.5} style={{ animation: 'spin 1s linear infinite' }} />
+          <p style={{ color: '#fff', fontSize: '16px', fontWeight: 600, margin: 0 }}>Sedang menghubungi BSI...</p>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', margin: 0 }}>Mohon tunggu sebentar</p>
+        </div>
+      )}
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       <BottomNav />
     </div>
   );

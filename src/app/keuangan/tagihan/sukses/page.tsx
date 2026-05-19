@@ -2,6 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { CheckCircle } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import CountdownTimer from '@/components/CountdownTimer';
 import PanduanPembayaran from '@/components/PanduanPembayaran';
@@ -21,6 +22,8 @@ function SuksesContent() {
   };
 
   return (
+    <>
+      <style>{`@keyframes bounceIn { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }`}</style>
     <div style={{ minHeight: '100dvh', background: 'var(--color-bg)' }}>
       <PageHeader title="Menunggu Pembayaran" />
       <main style={{ padding: '16px', paddingBottom: '32px' }}>
@@ -33,7 +36,9 @@ function SuksesContent() {
           marginBottom: '20px',
           color: '#fff',
         }}>
-          <div style={{ fontSize: '40px', marginBottom: '8px' }}>✅</div>
+          <div style={{ marginBottom: '8px', animation: 'bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)' }}>
+            <CheckCircle size={56} color="#16A34A" strokeWidth={2.5} />
+          </div>
           <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px', margin: '0 0 4px' }}>
             Kode Bayar Berhasil Dibuat
           </h2>
@@ -110,6 +115,7 @@ function SuksesContent() {
         </div>
       </main>
     </div>
+    </>
   );
 }
 

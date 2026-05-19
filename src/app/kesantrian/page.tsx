@@ -1,5 +1,6 @@
 'use client';
 
+import { GraduationCap } from 'lucide-react';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
@@ -32,9 +33,15 @@ export default function KesantrianPage() {
     <div style={{ minHeight: '100dvh', background: 'var(--color-bg)' }}>
       <PageHeader title="Kesantrian" showBack={false} />
       <main className="main-content" style={{ padding: '16px' }}>
-        <p style={{ fontSize: '14px', color: 'var(--color-text-medium)', marginBottom: '20px' }}>
-          Pantau aktivitas dan perkembangan santri secara real-time.
-        </p>
+        <div style={{ background: 'linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)', borderRadius: '18px', padding: '18px 20px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid #BBF7D0' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#16A34A', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <GraduationCap size={24} strokeWidth={1.5} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#166534', margin: '0 0 2px' }}>Kesantrian</h3>
+            <p style={{ fontSize: '13px', color: '#166534', margin: 0, opacity: 0.8 }}>Pantau aktivitas dan perkembangan santri secara real-time.</p>
+          </div>
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {menus.map(m => (
             <Link key={m.href} href={m.href} style={{ 
