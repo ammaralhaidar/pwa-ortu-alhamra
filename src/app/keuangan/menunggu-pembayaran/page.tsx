@@ -123,8 +123,8 @@ function MenungguContent() {
           );
         })}
 
-        {/* Mock Test Button */}
-        {displayList.length > 0 && (
+        {/* Mock Test Button — hanya di development */}
+        {process.env.NODE_ENV === 'development' && displayList.length > 0 && (
           <button
             onClick={testNotif}
             style={{
