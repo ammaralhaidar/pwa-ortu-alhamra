@@ -1,0 +1,106 @@
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e28] [cursor=pointer]:
+    - img [ref=e29]
+  - alert [ref=e32]
+  - generic [ref=e33]:
+    - banner [ref=e34]:
+      - generic [ref=e35]:
+        - img "IBS Al Hamra" [ref=e36]
+        - button "Keluar" [ref=e37] [cursor=pointer]
+      - paragraph [ref=e38]: Assalamu'alaikum,
+      - heading "Efendi sudarmono" [level=1] [ref=e39]
+      - generic [ref=e40]:
+        - img [ref=e41]
+        - combobox [ref=e44] [cursor=pointer]:
+          - option "Muhammad Fathan Abdillah" [selected]
+          - option "Muhammad Rafi Afifuddin"
+    - main [ref=e45]:
+      - generic [ref=e46]:
+        - heading "Ringkasan Keuangan" [level=2] [ref=e47]
+        - generic [ref=e48]:
+          - link "Total Tagihan Aktif Rp 4.445.000 Bayar →" [ref=e49] [cursor=pointer]:
+            - /url: /keuangan/tagihan
+            - generic [ref=e50]:
+              - generic [ref=e51]:
+                - paragraph [ref=e52]: Total Tagihan Aktif
+                - paragraph [ref=e53]: Rp 4.445.000
+              - generic [ref=e54]: Bayar →
+          - generic [ref=e55]:
+            - paragraph [ref=e56]: Uang Saku
+            - paragraph [ref=e57]: Rp 475.000
+            - link "Isi Saldo" [ref=e58] [cursor=pointer]:
+              - /url: /keuangan/uang-saku
+          - generic [ref=e59]:
+            - paragraph [ref=e60]: Dompet Kantin
+            - paragraph [ref=e61]: Rp 4.800
+            - link "Riwayat" [ref=e62] [cursor=pointer]:
+              - /url: /keuangan/kantin
+      - generic [ref=e63]:
+        - heading "Aktivitas Kesantrian" [level=2] [ref=e64]
+        - generic [ref=e65]:
+          - 'link "Progress Tahfidz Total Hafalan: 3 Juz 3 Halaman Setoran Terakhir: At-Taubah Ayat 68" [ref=e66] [cursor=pointer]':
+            - /url: /kesantrian/tahfidz
+            - generic [ref=e67]:
+              - img [ref=e69]
+              - generic [ref=e71]:
+                - paragraph [ref=e72]: Progress Tahfidz
+                - paragraph [ref=e73]: "Total Hafalan: 3 Juz 3 Halaman"
+              - img [ref=e74]
+            - generic [ref=e76]:
+              - paragraph [ref=e77]: "Setoran Terakhir:"
+              - paragraph [ref=e78]: At-Taubah Ayat 68
+          - link "Mutabaah Harian Lihat Riwayat" [ref=e79] [cursor=pointer]:
+            - /url: /kesantrian/mutabaah
+            - img [ref=e81]
+            - generic [ref=e85]:
+              - paragraph [ref=e86]: Mutabaah Harian
+              - paragraph [ref=e87]: Lihat Riwayat
+            - img [ref=e88]
+          - link "Kesehatan Riwayat Pemeriksaan" [ref=e90] [cursor=pointer]:
+            - /url: /kesantrian/kesehatan
+            - img [ref=e92]
+            - generic [ref=e94]:
+              - paragraph [ref=e95]: Kesehatan
+              - paragraph [ref=e96]: Riwayat Pemeriksaan
+            - img [ref=e97]
+          - link "Pelanggaran Histori & Poin" [ref=e99] [cursor=pointer]:
+            - /url: /kesantrian/pelanggaran
+            - img [ref=e101]
+            - generic [ref=e103]:
+              - paragraph [ref=e104]: Pelanggaran
+              - paragraph [ref=e105]: Histori & Poin
+            - img [ref=e106]
+    - navigation [ref=e108]:
+      - link "Beranda" [ref=e109] [cursor=pointer]:
+        - /url: /
+        - img [ref=e111]
+        - generic [ref=e114]: Beranda
+      - link "Keuangan" [ref=e115] [cursor=pointer]:
+        - /url: /keuangan
+        - img [ref=e118]
+        - generic [ref=e120]: Keuangan
+      - link "Kesantrian" [ref=e121] [cursor=pointer]:
+        - /url: /kesantrian
+        - img [ref=e123]
+        - generic [ref=e125]: Kesantrian
+      - link "Profil" [ref=e126] [cursor=pointer]:
+        - /url: /profil
+        - img [ref=e128]
+        - generic [ref=e131]: Profil
+  - generic [ref=e133]:
+    - generic [ref=e135]:
+      - img "IBS Al Hamra" [ref=e136]
+      - heading "Install Aplikasi IBS Al Hamra" [level=3] [ref=e137]
+      - paragraph [ref=e138]: Akses portal orang tua lebih mudah dan cepat
+    - generic [ref=e139]:
+      - generic [ref=e140]:
+        - img [ref=e141]
+        - generic [ref=e143]: Akses 3x Lebih Cepat
+      - generic [ref=e144]:
+        - img [ref=e145]
+        - generic [ref=e147]: Tanpa Perlu Buka Browser
+      - generic [ref=e148]:
+        - img [ref=e149]
+        - generic [ref=e154]: Hemat Memori HP
+    - button "Install Sekarang" [ref=e155] [cursor=pointer]
+    - button "Nanti Saja" [ref=e156] [cursor=pointer]

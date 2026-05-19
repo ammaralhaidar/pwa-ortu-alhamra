@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Wallet } from 'lucide-react';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
@@ -54,9 +55,15 @@ export default function KeuanganPage() {
     <div style={{ minHeight: '100dvh', background: 'var(--color-bg)' }}>
       <PageHeader title="Keuangan" showBack={false} />
       <main className="main-content" style={{ padding: '16px' }}>
-        <p style={{ fontSize: '14px', color: 'var(--color-text-medium)', marginBottom: '20px' }}>
-          Kelola tagihan dan keuangan santri dari sini.
-        </p>
+        <div style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)', borderRadius: '18px', padding: '18px 20px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid #BFDBFE' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Wallet size={24} strokeWidth={1.5} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-primary)', margin: '0 0 2px' }}>Keuangan Santri</h3>
+            <p style={{ fontSize: '13px', color: '#1E40AF', margin: 0, opacity: 0.8 }}>Kelola tagihan, uang saku, dan pantau keuangan santri dengan mudah.</p>
+          </div>
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {menus.map((m) => (
             <Link key={m.href} href={m.href} style={{

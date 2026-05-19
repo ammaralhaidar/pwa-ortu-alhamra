@@ -1,0 +1,23 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - img "IBS Al Hamra" [ref=e4]
+      - paragraph [ref=e5]: Portal Wali Santri
+    - generic [ref=e6]:
+      - heading "Masuk ke Akun" [level=2] [ref=e7]
+      - paragraph [ref=e8]: Gunakan email dan password yang diberikan oleh pihak pesantren.
+      - generic [ref=e9]:
+        - generic [ref=e10]:
+          - generic [ref=e11]: Email
+          - textbox "contoh@email.com" [ref=e12]
+        - generic [ref=e13]:
+          - generic [ref=e14]: Password
+          - generic [ref=e15]:
+            - textbox "Masukkan password" [ref=e16]
+            - button [ref=e17] [cursor=pointer]:
+              - img [ref=e18]
+        - button "Masuk" [ref=e21] [cursor=pointer]
+      - paragraph [ref=e22]: Lupa password? Hubungi pihak pesantren.
+  - button "Open Next.js Dev Tools" [ref=e28] [cursor=pointer]:
+    - img [ref=e29]
+  - alert [ref=e32]

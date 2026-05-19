@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
 import { getActiveSiswaId } from '@/lib/auth';
@@ -68,7 +69,7 @@ export default function UangSakuPage() {
 
         <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '14px', padding: '14px 16px', marginBottom: '20px' }}>
           <p style={{ fontSize: '13px', color: '#166534', margin: '0 0 10px' }}>
-            Saldo uang saku akan dipindahkan ke dompet kantin setelah disetujui pengurus pesantren.
+            Saldo uang saku akan dipindahkan ke saldo dompet oleh masing-masing musyrif.
           </p>
           <button onClick={() => setShowTopup(true)} style={{ width: '100%', padding: '12px', background: 'var(--color-accent)', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
             + Top Up Saldo
@@ -83,8 +84,11 @@ export default function UangSakuPage() {
           return (
             <div key={i} style={{ background: 'var(--color-surface)', borderRadius: '14px', padding: '14px', border: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <div>
-                <p style={{ fontWeight: 600, fontSize: '14px', margin: '0 0 2px' }}>{tx.jns_transaksi || tx.keterangan || 'Transaksi'}</p>
-                <p style={{ fontSize: '12px', color: 'var(--color-text-medium)', margin: 0 }}>{formatDate(tx.tgl_transaksi)}</p>
+                <p style={{ fontWeight: 600, fontSize: '14px', margin: '0 0 1px' }}>{tx.jns_transaksi || 'Transaksi'}</p>
+                {tx.keterangan && tx.keterangan !== tx.jns_transaksi && (
+                  <p style={{ fontSize: '12px', color: 'var(--color-text-medium)', margin: '0 0 1px' }}>{tx.keterangan}</p>
+                )}
+                <p style={{ fontSize: '11px', color: 'var(--color-text-low)', margin: 0 }}>{formatDate(tx.tgl_transaksi)}</p>
               </div>
               <span style={{ fontWeight: 700, fontSize: '15px', color: isIn ? 'var(--color-accent)' : 'var(--color-danger)' }} className="rupiah">
                 {isIn ? '+' : '-'}{formatRupiah(isIn ? tx.amount_in : tx.amount_out)}
@@ -123,6 +127,14 @@ export default function UangSakuPage() {
           </div>
         </div>
       )}
+      {submitting && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(15,54,89,0.85)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+          <Loader2 size={48} color="#fff" strokeWidth={2.5} style={{ animation: 'spin 1s linear infinite' }} />
+          <p style={{ color: '#fff', fontSize: '16px', fontWeight: 600, margin: 0 }}>Sedang menghubungi BSI...</p>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', margin: 0 }}>Mohon tunggu sebentar</p>
+        </div>
+      )}
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       <BottomNav />
     </div>
   );

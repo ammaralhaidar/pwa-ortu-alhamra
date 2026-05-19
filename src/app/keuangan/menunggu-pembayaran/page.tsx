@@ -8,6 +8,11 @@ import BottomNav from '@/components/BottomNav';
 import CountdownTimer from '@/components/CountdownTimer';
 import PanduanPembayaran from '@/components/PanduanPembayaran';
 import { formatRupiah, formatFullDateTime } from '@/lib/utils';
+import {
+  registerServiceWorker,
+  subscribePush,
+  showLocalNotification,
+} from '@/lib/push';
 
 function MenungguContent() {
   const searchParams = useSearchParams();
@@ -29,6 +34,45 @@ function MenungguContent() {
   const highlighted = targetId ? pembayaran.find(p => String(p.id) === targetId) : null;
   const rest = pembayaran.filter(p => String(p.id) !== targetId);
   const displayList = highlighted ? [highlighted, ...rest] : pembayaran;
+
+  const testNotif = async () => {
+    try {
+      const reg = await registerServiceWorker();
+      if (!reg) return alert('Service worker tidak terdaftar');
+
+      const sub = await subscribePush(reg);
+      if (!sub) return alert('Gagal subscribe push. Cek:\n1. Izin notifikasi sudah di-allow\n2. Browser support push\n3. Koneksi internet (push service butuh koneksi ke FCM/GCM)');
+
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return alert('Izin notifikasi ditolak.');
+
+      showLocalNotification(
+        'Test Notifikasi',
+        'Notifikasi push berfungsi dengan baik!',
+        '/keuangan/menunggu-pembayaran',
+      );
+
+      const res = await fetch('/api/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscription: sub.toJSON(),
+          title: 'Test Notifikasi PWA',
+          body: 'Notifikasi dari server (simulasi) — push berfungsi!',
+          url: '/keuangan/menunggu-pembayaran',
+        }),
+      });
+
+      if (res.ok) {
+        alert('Notifikasi berhasil dikirim!');
+      } else {
+        const err = await res.json();
+        alert('Gagal kirim: ' + (err.error || 'Unknown'));
+      }
+    } catch (e: any) {
+      alert('Error: ' + (e.message || e));
+    }
+  };
 
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--color-bg)' }}>
@@ -78,6 +122,30 @@ function MenungguContent() {
             </div>
           );
         })}
+
+        {/* Mock Test Button */}
+        {displayList.length > 0 && (
+          <button
+            onClick={testNotif}
+            style={{
+              position: 'fixed',
+              bottom: '80px',
+              right: '16px',
+              zIndex: 999,
+              background: '#16A34A',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '10px 16px',
+              fontSize: '13px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(22,163,74,0.35)',
+            }}
+          >
+            Test Notifikasi
+          </button>
+        )}
       </main>
       <BottomNav />
     </div>

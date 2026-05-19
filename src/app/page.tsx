@@ -136,7 +136,7 @@ export default function DashboardPage() {
             Ringkasan Keuangan
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div style={{ gridColumn: '1 / -1', background: 'var(--color-surface)', borderRadius: '16px', padding: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: keuangan?.total_tagihan_aktif ? '1px solid #FEE2E2' : '1px solid var(--color-border)' }}>
+            <Link href="/keuangan/tagihan" style={{ gridColumn: '1 / -1', background: 'var(--color-surface)', borderRadius: '16px', padding: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: keuangan?.total_tagihan_aktif ? '1px solid #FEE2E2' : '1px solid var(--color-border)', textDecoration: 'none', color: 'inherit', display: 'block' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <p style={{ fontSize: '12px', color: 'var(--color-text-medium)', marginBottom: '4px' }}>Total Tagihan Aktif</p>
@@ -148,11 +148,11 @@ export default function DashboardPage() {
                     </p>
                   )}
                 </div>
-                <Link href="/keuangan/tagihan" style={{ background: 'var(--color-primary)', color: '#fff', textDecoration: 'none', padding: '8px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                  Bayar
-                </Link>
+                <div style={{ background: 'var(--color-primary)', color: '#fff', padding: '8px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  Bayar →
+                </div>
               </div>
-            </div>
+            </Link>
 
             <div style={{ background: 'var(--color-surface)', borderRadius: '16px', padding: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid var(--color-border)' }}>
               <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', marginBottom: '4px' }}>Uang Saku</p>

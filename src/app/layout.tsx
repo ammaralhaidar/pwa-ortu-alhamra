@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import InstallPrompt from '@/components/InstallPrompt';
+import NotificationInit from '@/components/NotificationInit';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -35,6 +36,7 @@ export default function RootLayout({
       <body>
         {children}
         <InstallPrompt />
+        <NotificationInit />
       </body>
     </html>
   );
