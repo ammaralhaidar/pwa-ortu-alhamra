@@ -1,12 +1,19 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import CountdownTimer from '@/components/CountdownTimer';
 import PanduanPembayaran from '@/components/PanduanPembayaran';
 import { formatRupiah } from '@/lib/utils';
+import {
+  registerServiceWorker,
+  requestNotificationPermission,
+  subscribePush,
+  sendSubscriptionToServer,
+  showLocalNotification,
+} from '@/lib/push';
 
 function SuksesContent() {
   const params = useSearchParams();
@@ -15,6 +22,30 @@ function SuksesContent() {
   const total = Number(params.get('total') || 0);
   const admin = Number(params.get('admin') || 0);
   const expired = params.get('expired') || '';
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const perm = await requestNotificationPermission();
+        if (perm !== 'granted') return;
+
+        const reg = await registerServiceWorker();
+        if (!reg) return;
+
+        const sub = await subscribePush(reg);
+        if (sub) {
+          await sendSubscriptionToServer(sub);
+        }
+
+        showLocalNotification(
+          'Kode Bayar Berhasil Dibuat',
+          'Segera selesaikan pembayaran sebelum batas waktu.'
+        );
+      } catch (e: any) {
+        console.error('Push setup error:', e);
+      }
+    })();
+  }, []);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).catch(() => {});
