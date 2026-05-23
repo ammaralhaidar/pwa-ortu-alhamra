@@ -206,8 +206,10 @@ export default function DashboardPage() {
 
             {[
               { label: 'Mutabaah Harian', value: 'Lihat Riwayat', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="m9 15 2 2 4-4"/></svg>, href: '/kesantrian/mutabaah', color: '#3B82F6', bg: '#EFF6FF' },
+              /* Temporarily Hidden
               { label: 'Kesehatan', value: 'Riwayat Pemeriksaan', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>, href: '/kesantrian/kesehatan', color: '#EC4899', bg: '#FDF2F8' },
               { label: 'Pelanggaran', value: 'Histori & Poin', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, href: '/kesantrian/pelanggaran', color: '#F59E0B', bg: '#FFFBEB' },
+              */
             ].map((item, index) => (
               <Link key={item.href + index} href={item.href} style={{ background: 'var(--color-surface)', borderRadius: '16px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px', textDecoration: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', border: '1px solid var(--color-border)' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: item.bg, color: item.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
