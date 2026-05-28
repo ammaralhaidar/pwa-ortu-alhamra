@@ -7,7 +7,7 @@ import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
 import CountdownTimer from '@/components/CountdownTimer';
 import PanduanPembayaran from '@/components/PanduanPembayaran';
-import { formatRupiah, formatFullDateTime } from '@/lib/utils';
+import { formatRupiah, formatFullDateTime, odooToUtc } from '@/lib/utils';
 import {
   registerServiceWorker,
   subscribePush,
@@ -26,14 +26,18 @@ function MenungguContent() {
       .finally(() => setLoading(false));
   }, []);
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, label?: string) => {
     navigator.clipboard.writeText(text).catch(() => {});
-    alert('Disalin!');
+    alert(`${label || 'Teks'} berhasil disalin!`);
   };
 
-  const highlighted = targetId ? pembayaran.find(p => String(p.id) === targetId) : null;
-  const rest = pembayaran.filter(p => String(p.id) !== targetId);
-  const displayList = highlighted ? [highlighted, ...rest] : pembayaran;
+  const now = Date.now();
+  const aktif = pembayaran.filter(p =>
+    !p.tanggal_expired || new Date(odooToUtc(p.tanggal_expired)).getTime() > now
+  );
+  const highlighted = targetId ? aktif.find(p => String(p.id) === targetId) : null;
+  const rest = aktif.filter(p => String(p.id) !== targetId);
+  const displayList = highlighted ? [highlighted, ...rest] : aktif;
 
   const testNotif = async () => {
     try {
@@ -99,18 +103,62 @@ function MenungguContent() {
                   </span>
                   <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-text-medium)' }}>{p.siswa[0]?.name}</p>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontWeight: 800, fontSize: '18px', color: 'var(--color-primary)', margin: 0 }} className="rupiah">{formatRupiah(p.total_bayar)}</p>
-                  <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '2px 0 0' }}>Total Transfer</p>
-                </div>
               </div>
               <div style={{ background: '#F0F7FF', borderRadius: '12px', padding: '12px 14px', marginBottom: '14px' }}>
                 <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '0 0 4px' }}>{labelVa}</p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <p style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-primary)', letterSpacing: '1px', margin: 0 }}>{va}</p>
-                  <button onClick={() => copyToClipboard(va)} style={{ background: 'var(--color-primary)', border: 'none', borderRadius: '8px', padding: '6px 10px', cursor: 'pointer', color: '#fff', fontSize: '11px', fontWeight: 600 }}>Salin</button>
+                  <button onClick={() => copyToClipboard(va, 'Kode bayar')} style={{ background: 'transparent', border: '1.5px solid var(--color-primary)', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', color: 'var(--color-primary)', fontSize: '12px', fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>Salin</button>
                 </div>
               </div>
+
+              {/* Jumlah Transfer Section */}
+              <div style={{ background: '#F0F7FF', borderRadius: '12px', padding: '12px 14px', marginBottom: '14px' }}>
+                <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '0 0 4px' }}>Jumlah Transfer</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <p style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-primary)', letterSpacing: '1px', margin: 0 }} className="rupiah">
+                    {formatRupiah(p.total_bayar)}
+                  </p>
+                  <button
+                    onClick={() => copyToClipboard(String(p.total_bayar), 'Nominal')}
+                    style={{
+                      background: 'transparent',
+                      border: '1.5px solid var(--color-primary)',
+                      borderRadius: '8px',
+                      padding: '6px 12px',
+                      cursor: 'pointer',
+                      color: 'var(--color-primary)',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      fontFamily: 'Inter, sans-serif',
+                    }}
+                  >
+                    Salin
+                  </button>
+                </div>
+              </div>
+
+              {/* Warning Box */}
+              <div style={{
+                background: '#FEF3C7',
+                border: '1px solid #FDE68A',
+                borderRadius: '12px',
+                padding: '12px 14px',
+                display: 'flex',
+                gap: '10px',
+                alignItems: 'flex-start',
+                marginBottom: '14px',
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" style={{ flexShrink: 0, marginTop: '2px' }}>
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <div style={{ fontSize: '12px', color: '#78350F', lineHeight: 1.5 }}>
+                  <strong>Pastikan nominal exact match.</strong> Transfer dari bank selain BSI harus sama persis dengan jumlah di atas.
+                </div>
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
                 <CountdownTimer targetDateStr={p.tanggal_expired} />
               </div>
