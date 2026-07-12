@@ -47,7 +47,7 @@ export default function LoginPage() {
       }
 
       if (!result.orangtua_id) {
-        setError('Akun ini bukan akun Wali Santri. Silakan hubungi admin.');
+        setError('Akun ini bukan akun Wali Santri/Calon Wali Santri. Silakan hubungi admin.');
         return;
       }
 
@@ -58,6 +58,9 @@ export default function LoginPage() {
         username: result.username,
         orangtua_id: result.orangtua_id,
         siswa_id: result.siswa_id,
+        is_calon_orangtua: result.is_calon_orangtua || false,
+        calon_siswa_id: result.calon_siswa_id || false,
+        avatar_128: result.avatar_128 || false,
       });
 
       router.replace('/');

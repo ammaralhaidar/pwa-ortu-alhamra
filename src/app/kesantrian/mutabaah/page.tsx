@@ -11,14 +11,36 @@ export default function MutabaahPage() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
+    fetchData(1);
+  }, []);
+
+  const fetchData = (pageNum: number) => {
     const siswaId = getActiveSiswaId();
     if (!siswaId) { setLoading(false); return; }
-    fetch(`/odoo/api/v1/siswa/${siswaId}/mutabaah?limit=30`, { credentials: 'include' })
-      .then(r => r.json()).then(d => { if (d.success) setData(d.data); }).catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+    
+    if (pageNum === 1) setLoading(true);
+    else setLoadingMore(true);
+
+    fetch(`/odoo/api/v1/siswa/${siswaId}/mutabaah?limit=15&page=${pageNum}`, { credentials: 'include' })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          setData(prev => pageNum === 1 ? d.data : [...prev, ...d.data]);
+          if (d.pagination) setHasMore(pageNum < d.pagination.total_pages);
+          else setHasMore(false);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setLoading(false);
+        setLoadingMore(false);
+      });
+  };
 
   const toggle = (id: number) => {
     const n = new Set(expanded);
@@ -93,6 +115,32 @@ export default function MutabaahPage() {
             )}
           </div>
         ))}
+
+        {hasMore && (
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <button 
+              onClick={() => {
+                const next = page + 1;
+                setPage(next);
+                fetchData(next);
+              }}
+              disabled={loadingMore}
+              style={{
+                background: 'var(--color-primary)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: loadingMore ? 'not-allowed' : 'pointer',
+                opacity: loadingMore ? 0.7 : 1
+              }}
+            >
+              {loadingMore ? 'Memuat...' : 'Tampilkan Lebih Banyak'}
+            </button>
+          </div>
+        )}
       </main>
       <BottomNav />
     </div>

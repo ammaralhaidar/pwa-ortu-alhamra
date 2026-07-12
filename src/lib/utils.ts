@@ -53,3 +53,16 @@ export function formatFullDateTime(dateStr: string): string {
     minute: '2-digit',
   }).format(date) + ' WIB'; // Assume WIB as local for display context
 }
+
+export function formatNumberWithSeparator(value: string | number): string {
+  if (value === null || value === undefined || value === '') return '';
+  const clean = String(value).replace(/\D/g, '');
+  if (!clean) return '';
+  return new Intl.NumberFormat('id-ID').format(Number(clean));
+}
+
+export function parseFormattedNumber(value: string): number {
+  if (!value) return 0;
+  const clean = value.replace(/\D/g, '');
+  return clean ? Number(clean) : 0;
+}

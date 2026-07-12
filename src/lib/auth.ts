@@ -6,6 +6,9 @@ export interface UserData {
   orangtua_id: number | false;
   siswa_id: number | false;
   active_siswa_id?: number; // Currently selected student (multi-anak)
+  is_calon_orangtua?: boolean;
+  calon_siswa_id?: number | false;
+  avatar_128?: string | false;
 }
 
 const USER_KEY = 'ibs_pwa_user';
@@ -60,4 +63,14 @@ export async function logout(): Promise<void> {
       localStorage.removeItem(USER_KEY);
     }
   }
+}
+
+export function isCalonOrangtua(): boolean {
+  const user = getUser();
+  return user?.is_calon_orangtua === true;
+}
+
+export function getCalonSiswaId(): number | false {
+  const user = getUser();
+  return user?.calon_siswa_id || false;
 }
