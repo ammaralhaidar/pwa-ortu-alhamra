@@ -4,19 +4,20 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
-import { getUser, logout } from '@/lib/auth';
+import { getUser, logout, isCalonOrangtua } from '@/lib/auth';
 
 export default function ProfilPage() {
   const router = useRouter();
   const user = getUser();
+  const isCalon = isCalonOrangtua();
   const [showPassForm, setShowPassForm] = useState(false);
   const [oldPass, setOldPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogout = async () => {
-    if (!confirm('Yakin ingin keluar?')) return;
     await logout();
     router.replace('/login');
   };
@@ -52,13 +53,17 @@ export default function ProfilPage() {
       <PageHeader title="Profil" showBack={false} />
       <main className="main-content" style={{ padding: '16px' }}>
         <div style={{ background: 'var(--color-surface)', borderRadius: '20px', padding: '24px', textAlign: 'center', marginBottom: '16px', border: '1px solid var(--color-border)' }}>
-          <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', color: '#fff', fontWeight: 700, margin: '0 auto 12px' }}>
-            {user?.name?.[0]?.toUpperCase() || '?'}
+          <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', color: '#fff', fontWeight: 700, margin: '0 auto 12px', overflow: 'hidden' }}>
+            {user?.avatar_128 ? (
+              <img src={`data:image/jpeg;base64,${user.avatar_128}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Avatar" />
+            ) : (
+              user?.name?.[0]?.toUpperCase() || '?'
+            )}
           </div>
           <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text-high)', margin: '0 0 4px' }}>{user?.name || '-'}</h2>
           <p style={{ fontSize: '13px', color: 'var(--color-text-medium)', margin: 0 }}>{user?.username || '-'}</p>
           <div style={{ display: 'inline-block', background: '#EFF6FF', color: 'var(--color-primary)', fontSize: '12px', fontWeight: 600, padding: '4px 12px', borderRadius: '20px', marginTop: '10px' }}>
-            Wali Santri
+            {isCalon ? 'Calon Wali Santri' : 'Wali Santri'}
           </div>
         </div>
 
@@ -105,7 +110,7 @@ export default function ProfilPage() {
 
         <button
           id="btn-logout"
-          onClick={handleLogout}
+          onClick={() => setShowLogoutModal(true)}
           style={{ width: '100%', padding: '16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '16px', color: 'var(--color-danger)', fontSize: '15px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
         >
           Keluar dari Akun
@@ -115,6 +120,30 @@ export default function ProfilPage() {
           PWA Wali Santri IBS Al Hamra v1.0
         </p>
       </main>
+
+      {/* Custom Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: 'var(--color-surface)', borderRadius: '24px', width: '100%', maxWidth: '340px', padding: '24px', textAlign: 'center', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', border: '1px solid var(--color-border)' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--color-danger)' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+              </svg>
+            </div>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text-high)', margin: '0 0 8px', fontFamily: 'Inter, sans-serif' }}>Konfirmasi Keluar</h3>
+            <p style={{ fontSize: '14px', color: 'var(--color-text-medium)', margin: '0 0 24px', lineHeight: '1.5', fontFamily: 'Inter, sans-serif' }}>Apakah Anda yakin ingin keluar dari akun Anda?</p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={() => setShowLogoutModal(false)} style={{ flex: 1, padding: '12px', background: '#F1F5F9', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, color: '#475569', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                Batal
+              </button>
+              <button onClick={handleLogout} style={{ flex: 1, padding: '12px', background: 'var(--color-danger)', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, color: '#fff', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <BottomNav />
     </div>
   );

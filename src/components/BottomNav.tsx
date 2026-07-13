@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getActiveSiswaId } from '@/lib/auth';
+import { getActiveSiswaId, isCalonOrangtua } from '@/lib/auth';
 
 const navItems = [
   {
@@ -53,6 +53,7 @@ export default function BottomNav() {
 
   useEffect(() => {
     if (pathname === '/login') return;
+    if (isCalonOrangtua()) { setTimeout(() => setHasKeuanganNotif(false), 0); return; }
     const siswaId = getActiveSiswaId();
     const url = siswaId ? `/odoo/api/v1/dashboard/keuangan?siswa_id=${siswaId}` : '/odoo/api/v1/dashboard/keuangan';
     fetch(url, { credentials: 'include' })
@@ -70,6 +71,13 @@ export default function BottomNav() {
   }, [pathname]);
 
   if (pathname === '/login') return null;
+
+  const isCalon = isCalonOrangtua();
+  const visibleItems = isCalon
+    ? navItems
+        .filter(item => item.href !== '/kesantrian')
+        .map(item => item.href === '/keuangan' ? { ...item, href: '/keuangan/tagihan-calon', label: 'Tagihan' } : item)
+    : navItems;
 
   return (
     <nav
@@ -89,7 +97,7 @@ export default function BottomNav() {
         boxShadow: '0 -2px 12px rgba(0,0,0,0.06)',
       }}
     >
-      {navItems.map((item) => {
+      {visibleItems.map((item) => {
         const isActive =
           item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
 

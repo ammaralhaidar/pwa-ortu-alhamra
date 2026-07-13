@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
 import { getActiveSiswaId } from '@/lib/auth';
-import { formatRupiah, formatDate } from '@/lib/utils';
+import { formatRupiah, formatDate, formatNumberWithSeparator } from '@/lib/utils';
 
 interface UangSakuSaldo { saldo_uang_saku: number; saldo_dompet_kantin: number; }
 
@@ -17,20 +17,59 @@ export default function UangSakuPage() {
   const [loading, setLoading] = useState(true);
   const [showTopup, setShowTopup] = useState(false);
   const [topupNominal, setTopupNominal] = useState('');
+  const [topupNominalInput, setTopupNominalInput] = useState('');
   const adminAmount = 2000;
   const [submitting, setSubmitting] = useState(false);
 
+  const [checkoutStep, setCheckoutStep] = useState<'preview' | 'metode'>('preview');
+  const [paymentMethod, setPaymentMethod] = useState<'bsi' | 'lainnya' | null>(null);
+  const [confirmChecked, setConfirmChecked] = useState(false);
+
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   useEffect(() => {
-    const siswaId = getActiveSiswaId();
-    const overviewUrl = siswaId ? `/odoo/api/v1/dashboard/overview?siswa_id=${siswaId}` : '/odoo/api/v1/dashboard/overview';
-    Promise.all([
-      fetch(overviewUrl, { credentials: 'include' }).then(r => r.json()),
-      siswaId ? fetch(`/odoo/api/v1/siswa/${siswaId}/uang_saku?limit=30`, { credentials: 'include' }).then(r => r.json()) : Promise.resolve({ success: false }),
-    ]).then(([ovData, txData]) => {
-      if (ovData.success) setSaldo(ovData.data?.overview_keuangan);
-      if (txData.success) setTransaksi(txData.data || []);
-    }).catch(() => {}).finally(() => setLoading(false));
+    fetchData(1);
   }, []);
+
+  const fetchData = (pageNum: number) => {
+    const siswaId = getActiveSiswaId();
+    if (!siswaId) { setLoading(false); return; }
+    
+    if (pageNum === 1) setLoading(true);
+    else setLoadingMore(true);
+
+    const overviewUrl = `/odoo/api/v1/dashboard/overview?siswa_id=${siswaId}`;
+    
+    const promises: Promise<any>[] = [
+      fetch(`/odoo/api/v1/siswa/${siswaId}/uang_saku?limit=15&page=${pageNum}`, { credentials: 'include' }).then(r => r.json())
+    ];
+    
+    if (pageNum === 1) {
+      promises.push(fetch(overviewUrl, { credentials: 'include' }).then(r => r.json()));
+    }
+
+    Promise.all(promises)
+      .then((results) => {
+        const txData = results[0];
+        if (txData.success) {
+          setTransaksi(prev => pageNum === 1 ? txData.data : [...prev, ...txData.data]);
+          if (txData.pagination) setHasMore(pageNum < txData.pagination.total_pages);
+          else setHasMore(false);
+        }
+        
+        if (pageNum === 1 && results[1]) {
+          const ovData = results[1];
+          if (ovData.success) setSaldo(ovData.data?.overview_keuangan);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setLoading(false);
+        setLoadingMore(false);
+      });
+  };
 
   const handleTopup = async () => {
     const siswaId = getActiveSiswaId();
@@ -44,7 +83,7 @@ export default function UangSakuPage() {
       });
       const data = await res.json();
       if (data.success) {
-        router.push('/keuangan/tagihan/sukses?' + new URLSearchParams({ va: data.data.nomor_va, kode_bayar: data.data.kode_bayar, total: String(data.data.total_bayar), admin: String(data.data.biaya_admin), expired: data.data.batas_waktu }).toString());
+        router.push('/keuangan/tagihan/sukses?' + new URLSearchParams({ va: data.data.nomor_va, kode_bayar: data.data.kode_bayar, total: String(data.data.total_bayar), admin: String(data.data.biaya_admin), expired: data.data.batas_waktu, metode: paymentMethod || 'bsi' }).toString());
       } else {
         alert(data.error || 'Gagal membuat kode top up.');
       }
@@ -96,34 +135,160 @@ export default function UangSakuPage() {
             </div>
           );
         })}
+
+        {hasMore && (
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <button 
+              onClick={() => {
+                const next = page + 1;
+                setPage(next);
+                fetchData(next);
+              }}
+              disabled={loadingMore}
+              style={{
+                background: 'var(--color-primary)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: loadingMore ? 'not-allowed' : 'pointer',
+                opacity: loadingMore ? 0.7 : 1
+              }}
+            >
+              {loadingMore ? 'Memuat...' : 'Tampilkan Lebih Banyak'}
+            </button>
+          </div>
+        )}
       </main>
 
       {showTopup && (
-        <div onClick={() => setShowTopup(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 60, display: 'flex', alignItems: 'flex-end' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--color-surface)', borderRadius: '24px 24px 0 0', width: '100%', padding: '24px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
+        <div onClick={() => { setShowTopup(false); setTopupNominal(''); setTopupNominalInput(''); setCheckoutStep('preview'); setPaymentMethod(null); setConfirmChecked(false); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 60, display: 'flex', alignItems: 'flex-end' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--color-surface)', borderRadius: '24px 24px 0 0', width: '100%', padding: '24px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))', maxHeight: '80dvh', overflowY: 'auto' }}>
             <div style={{ width: '36px', height: '4px', background: '#CBD5E1', borderRadius: '2px', margin: '0 auto 20px' }} />
-            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px' }}>Top Up Uang Saku</h3>
-            <label style={{ fontSize: '13px', fontWeight: 500, display: 'block', marginBottom: '6px' }}>Nominal Top Up</label>
-            <input type="number" value={topupNominal} onChange={e => setTopupNominal(e.target.value)} placeholder="Masukkan nominal (min. Rp 10.000)" style={{ width: '100%', padding: '13px 14px', border: '1.5px solid var(--color-border)', borderRadius: '12px', fontSize: '16px', outline: 'none', fontFamily: 'Inter, sans-serif', marginBottom: '12px' }} />
-            {topupNominal && Number(topupNominal) > 0 && (
-              <div style={{ background: '#F8FAFC', borderRadius: '12px', padding: '12px', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '13px', color: 'var(--color-text-medium)' }}>Nominal</span>
-                  <span style={{ fontWeight: 600 }} className="rupiah">{formatRupiah(Number(topupNominal))}</span>
+            
+            {checkoutStep === 'preview' ? (
+              <>
+                <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px' }}>Top Up Uang Saku</h3>
+                <label style={{ fontSize: '13px', fontWeight: 500, display: 'block', marginBottom: '6px' }}>Nominal Top Up</label>
+                <input type="text" inputMode="numeric" value={topupNominalInput} onChange={e => {
+                  const digits = e.target.value.replace(/\D/g, '');
+                  setTopupNominalInput(digits ? formatNumberWithSeparator(digits) : '');
+                  setTopupNominal(digits);
+                }} placeholder="Masukkan nominal (min. Rp 10.000)" style={{ width: '100%', padding: '13px 14px', border: '1.5px solid var(--color-border)', borderRadius: '12px', fontSize: '16px', outline: 'none', fontFamily: 'Inter, sans-serif', marginBottom: '12px' }} />
+                {topupNominal && Number(topupNominal) > 0 && (
+                  <div style={{ background: '#F8FAFC', borderRadius: '12px', padding: '12px', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '13px', color: 'var(--color-text-medium)' }}>Nominal</span>
+                      <span style={{ fontWeight: 600 }} className="rupiah">{formatRupiah(Number(topupNominal))}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '13px', color: 'var(--color-text-medium)' }}>Biaya Admin</span>
+                      <span style={{ fontWeight: 600, color: 'var(--color-warning)' }} className="rupiah">+ {formatRupiah(adminAmount)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid var(--color-border)' }}>
+                      <span style={{ fontWeight: 700 }}>Total Transfer</span>
+                      <span style={{ fontWeight: 800, color: 'var(--color-primary)', fontSize: '16px' }} className="rupiah">{formatRupiah(Number(topupNominal) + adminAmount)}</span>
+                    </div>
+                  </div>
+                )}
+                <button onClick={() => setCheckoutStep('metode')} disabled={!topupNominal || Number(topupNominal) < 10000} style={{ width: '100%', padding: '15px', background: 'var(--color-primary)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '16px', fontWeight: 600, cursor: (!topupNominal || Number(topupNominal) < 10000) ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: (!topupNominal || Number(topupNominal) < 10000) ? 0.6 : 1 }}>
+                  Pilih Metode Pembayaran
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="m9 18 6-6-6-6"/>
+                  </svg>
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                  <button onClick={() => { setCheckoutStep('preview'); setPaymentMethod(null); setConfirmChecked(false); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-text-medium)', display: 'flex', alignItems: 'center', padding: 0 }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+                  </button>
+                  <h3 style={{ fontSize: '17px', fontWeight: 700, margin: 0 }}>Pilih Metode Pembayaran</h3>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '13px', color: 'var(--color-text-medium)' }}>Biaya Admin</span>
-                  <span style={{ fontWeight: 600, color: 'var(--color-warning)' }} className="rupiah">+ {formatRupiah(adminAmount)}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid var(--color-border)' }}>
-                  <span style={{ fontWeight: 700 }}>Total Transfer</span>
-                  <span style={{ fontWeight: 800, color: 'var(--color-primary)', fontSize: '16px' }} className="rupiah">{formatRupiah(Number(topupNominal) + adminAmount)}</span>
-                </div>
-              </div>
+
+                <button onClick={() => { setPaymentMethod('bsi'); setConfirmChecked(false); }} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', background: paymentMethod === 'bsi' ? '#EFF6FF' : 'var(--color-surface)', border: `2px solid ${paymentMethod === 'bsi' ? 'var(--color-primary)' : 'var(--color-border)'}`, borderRadius: '16px', padding: '16px', marginBottom: '12px', boxShadow: paymentMethod === 'bsi' ? '0 2px 12px rgba(23,77,127,0.12)' : '0 1px 4px rgba(0,0,0,0.05)', fontFamily: 'Inter, sans-serif' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                    <div style={{ width: '80px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', borderRadius: '8px', border: '1px solid var(--color-border)', padding: '4px 6px', flexShrink: 0 }}>
+                      <img src="/logos/bsi.svg" alt="BSI" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontWeight: 700, fontSize: '15px', color: 'var(--color-text-high)', margin: 0 }}>Bank Syariah Indonesia (BSI)</p>
+                    </div>
+                    <div style={{ width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${paymentMethod === 'bsi' ? 'var(--color-primary)' : 'var(--color-border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {paymentMethod === 'bsi' && <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'var(--color-primary)' }} />}
+                    </div>
+                  </div>
+                  <div style={{ paddingLeft: '92px' }}>
+                    <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '13px', color: 'var(--color-text-medium)', lineHeight: 1.6 }}>
+                      <li>Bayar via menu <strong>Akademik</strong> di Byond BSI</li>
+                      <li>Nominal <strong>otomatis terisi</strong>, tidak perlu ketik manual</li>
+                      <li>Tanpa biaya transfer tambahan</li>
+                    </ul>
+                    <span style={{ display: 'inline-block', marginTop: '10px', background: '#F0FDF4', color: '#16A34A', fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px' }}>✓ DIREKOMENDASIKAN</span>
+                  </div>
+                </button>
+
+                <button onClick={() => { setPaymentMethod('lainnya'); setConfirmChecked(false); }} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', background: paymentMethod === 'lainnya' ? '#FFFBEB' : 'var(--color-surface)', border: `2px solid ${paymentMethod === 'lainnya' ? '#D97706' : 'var(--color-border)'}`, borderRadius: '16px', padding: '16px', marginBottom: '16px', boxShadow: paymentMethod === 'lainnya' ? '0 2px 12px rgba(217,119,6,0.12)' : '0 1px 4px rgba(0,0,0,0.05)', fontFamily: 'Inter, sans-serif' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                    <div style={{ width: '80px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', borderRadius: '8px', border: '1px solid var(--color-border)', padding: '4px 6px', flexShrink: 0, color: 'var(--color-text-medium)' }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/><path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v4"/><path d="M12 14v4"/><path d="M16 14v4"/></svg>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontWeight: 700, fontSize: '15px', color: 'var(--color-text-high)', margin: 0 }}>Bank Lain (Selain BSI)</p>
+                      <p style={{ fontSize: '12px', color: 'var(--color-text-medium)', margin: '2px 0 0' }}>BCA, Mandiri, BNI, BRI, dan lainnya</p>
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '4px', padding: '3px 6px', display: 'flex', alignItems: 'center', height: '20px' }}><img src="/logos/bca.svg" alt="BCA" style={{ height: '10px', width: 'auto', objectFit: 'contain' }} /></div>
+                        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '4px', padding: '3px 6px', display: 'flex', alignItems: 'center', height: '20px' }}><img src="/logos/mandiri.svg" alt="Mandiri" style={{ height: '8px', width: 'auto', objectFit: 'contain' }} /></div>
+                        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '4px', padding: '3px 6px', display: 'flex', alignItems: 'center', height: '20px' }}><img src="/logos/bni.svg" alt="BNI" style={{ height: '10px', width: 'auto', objectFit: 'contain' }} /></div>
+                        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '4px', padding: '3px 6px', display: 'flex', alignItems: 'center', height: '20px' }}><img src="/logos/bri.svg" alt="BRI" style={{ height: '10px', width: 'auto', objectFit: 'contain' }} /></div>
+                      </div>
+                    </div>
+                    <div style={{ width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${paymentMethod === 'lainnya' ? '#D97706' : 'var(--color-border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {paymentMethod === 'lainnya' && <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#D97706' }} />}
+                    </div>
+                  </div>
+                  <div style={{ paddingLeft: '92px' }}>
+                    <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '13px', color: 'var(--color-text-medium)', lineHeight: 1.6 }}>
+                      <li>Transfer Antar Bank ke rekening BSI</li>
+                      <li>Nominal <strong>harus diisi manual</strong></li>
+                      <li>Ada biaya transfer antar bank dari bank Anda</li>
+                    </ul>
+                  </div>
+                </button>
+
+                {paymentMethod === 'lainnya' && (
+                  <div style={{ background: '#FEF2F2', border: '1.5px solid #FECACA', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
+                    <h4 style={{ color: 'var(--color-danger)', fontSize: '14px', fontWeight: 700, margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      Perhatian Penting
+                    </h4>
+                    <p style={{ fontSize: '13px', color: '#991B1B', lineHeight: 1.6, margin: '0 0 10px' }}>
+                      Nominal yang Anda transfer nanti <strong>harus sama persis</strong> dengan jumlah tagihan yang tertera. Jika tidak sesuai, pembayaran akan <strong>ditolak</strong> oleh sistem Smartbilling BSI.
+                    </p>
+                    <div style={{ background: '#fff', borderRadius: '10px', padding: '12px', textAlign: 'center', border: '1px solid #FECACA', marginBottom: '12px' }}>
+                      <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '0 0 4px' }}>Total yang harus ditransfer</p>
+                      <p style={{ fontSize: '22px', fontWeight: 800, color: 'var(--color-danger)', margin: 0 }} className="rupiah">{formatRupiah(Number(topupNominal) + adminAmount)}</p>
+                      <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '4px 0 0' }}>Sudah termasuk biaya admin Rp 2.000</p>
+                    </div>
+                    <button onClick={() => setConfirmChecked(!confirmChecked)} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, fontFamily: 'Inter, sans-serif' }}>
+                      <div style={{ width: '22px', height: '22px', borderRadius: '6px', flexShrink: 0, marginTop: '1px', border: `2px solid ${confirmChecked ? 'var(--color-primary)' : 'var(--color-border)'}`, background: confirmChecked ? 'var(--color-primary)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {confirmChecked && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+                      </div>
+                      <span style={{ fontSize: '13px', color: '#991B1B', lineHeight: 1.5 }}>Saya mengerti dan akan mentransfer nominal yang <strong>sama persis</strong>.</span>
+                    </button>
+                  </div>
+                )}
+
+                {paymentMethod && (
+                  <button onClick={handleTopup} disabled={submitting || (paymentMethod === 'lainnya' && !confirmChecked)} style={{ width: '100%', padding: '15px', background: (paymentMethod === 'lainnya' && !confirmChecked) ? '#CBD5E1' : 'var(--color-primary)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '16px', fontWeight: 600, cursor: (paymentMethod === 'lainnya' && !confirmChecked) ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif', opacity: (paymentMethod === 'lainnya' && !confirmChecked) ? 0.6 : 1 }}>
+                    {submitting ? 'Memproses...' : 'Buat Kode Top Up'}
+                  </button>
+                )}
+              </>
             )}
-            <button onClick={handleTopup} disabled={submitting || !topupNominal || Number(topupNominal) < 10000} style={{ width: '100%', padding: '15px', background: 'var(--color-accent)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '16px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
-              {submitting ? 'Memproses...' : 'Buat Kode Top Up'}
-            </button>
           </div>
         </div>
       )}
