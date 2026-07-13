@@ -31,7 +31,7 @@ export default function ProfilPage() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ old_password: oldPass, new_password: newPass }),
+        body: JSON.stringify({ params: { old_password: oldPass, new_password: newPass } }),
       });
       const data = await res.json();
       if (data.result?.code === 200) {
