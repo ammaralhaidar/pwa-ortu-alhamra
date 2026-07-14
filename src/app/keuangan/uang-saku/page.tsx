@@ -81,13 +81,25 @@ export default function UangSakuPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ params: { siswa_id: siswaId, nominal: Number(topupNominal) } }),
       });
-      const data = await res.json();
+      if (res.status === 401) {
+        alert('Sesi login Anda telah berakhir. Silakan login kembali.');
+        router.push('/login');
+        return;
+      }
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        alert('Sesi login Anda telah berakhir. Silakan login kembali.');
+        router.push('/login');
+        return;
+      }
       if (data.success) {
         router.push('/keuangan/tagihan/sukses?' + new URLSearchParams({ va: data.data.nomor_va, kode_bayar: data.data.kode_bayar, total: String(data.data.total_bayar), admin: String(data.data.biaya_admin), expired: data.data.batas_waktu, metode: paymentMethod || 'bsi' }).toString());
       } else {
         alert(data.error || 'Gagal membuat kode top up.');
       }
-    } catch { alert('Terjadi kesalahan koneksi.'); }
+    } catch { alert('Terjadi kesalahan koneksi. Silakan periksa jaringan internet Anda.'); }
     finally { setSubmitting(false); }
   };
 

@@ -173,7 +173,19 @@ export default function TagihanCalonPage() {
           params: { move_ids: Array.from(selected), nominal: displayNominal },
         }),
       });
-      const data = await res.json();
+      if (res.status === 401) {
+        alert("Sesi login Anda telah berakhir. Silakan login kembali.");
+        router.push("/login");
+        return;
+      }
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        alert("Sesi login Anda telah berakhir. Silakan login kembali.");
+        router.push("/login");
+        return;
+      }
       if (data.success) {
         router.push(
           "/keuangan/tagihan/sukses?" +
@@ -190,7 +202,7 @@ export default function TagihanCalonPage() {
         alert(data.error || "Gagal membuat kode bayar.");
       }
     } catch {
-      alert("Terjadi kesalahan koneksi.");
+      alert("Terjadi kesalahan koneksi. Silakan periksa jaringan internet Anda.");
     } finally {
       setSubmitting(false);
       setShowPreview(false);
