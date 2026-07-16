@@ -91,11 +91,13 @@ function MenungguContent() {
             <p style={{ color: 'var(--color-text-medium)', fontSize: '14px' }}>Semua tagihan sudah lunas atau belum membuat kode bayar.</p>
           </div>
         ) : displayList.map(p => {
-          const va = p.kode_bayar;
-          const labelVa = 'Kode Bayar';
+          const isLain = p.metode_pembayaran === 'lain' || p.metode === 'lain';
+          const vaDisplay = isLain ? (p.nomor_rekening_transfer || `9005065${p.kode_bayar}`) : p.kode_bayar;
+          const labelVa = isLain ? 'Rekening Tujuan (BSI)' : 'Kode Bayar (BSI)';
           const isHighlighted = String(p.id) === targetId;
+
           return (
-            <div key={p.id} style={{ background: 'var(--color-surface)', borderRadius: '20px', padding: '20px', marginBottom: '16px', border: isHighlighted ? '2px solid var(--color-primary)' : '1px solid var(--color-border)', boxShadow: isHighlighted ? '0 4px 20px rgba(23,77,127,0.15)' : '0 2px 8px rgba(0,0,0,0.05)' }}>
+            <div key={p.id} style={{ background: 'var(--color-surface)', borderRadius: '20px', padding: '20px', marginBottom: '16px', border: isHighlighted ? '2px solid var(--color-primary)' : (isLain ? '2px solid #D97706' : '1px solid var(--color-border)'), boxShadow: isHighlighted ? '0 4px 20px rgba(23,77,127,0.15)' : '0 2px 8px rgba(0,0,0,0.05)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
                 <div>
                   <span style={{ background: p.jenis === 'tagihan' ? '#EFF6FF' : '#F0FDF4', color: p.jenis === 'tagihan' ? 'var(--color-primary)' : 'var(--color-accent)', fontSize: '11px', fontWeight: 600, padding: '3px 8px', borderRadius: '6px' }}>
@@ -103,45 +105,90 @@ function MenungguContent() {
                   </span>
                   <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-text-medium)' }}>{p.siswa[0]?.name}</p>
                 </div>
+                {isLain && (
+                  <span style={{ background: '#FFFBEB', color: '#D97706', fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', border: '1px solid #FDE68A' }}>
+                    Bank Lain / Non-BSI
+                  </span>
+                )}
               </div>
-              <div style={{ background: '#F0F7FF', borderRadius: '12px', padding: '12px 14px', marginBottom: '14px' }}>
-                <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '0 0 4px' }}>{labelVa}</p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <p style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-primary)', letterSpacing: '1px', margin: 0 }}>{va}</p>
-                  <button onClick={() => copyToClipboard(va, 'Kode bayar')} style={{ background: 'transparent', border: '1.5px solid var(--color-primary)', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', color: 'var(--color-primary)', fontSize: '12px', fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>Salin</button>
+
+              {/* Top Warning Banner for Bank Lain */}
+              {isLain && (
+                <div style={{
+                  background: '#FEF3C7', border: '1.5px solid #FDE68A', borderRadius: '12px',
+                  padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px',
+                  marginBottom: '14px',
+                }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.5" style={{ flexShrink: 0 }}>
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <p style={{ fontSize: '12px', color: '#78350F', margin: 0, fontWeight: 700 }}>
+                      Pembayaran via Transfer Bank Lain (BCA, Mandiri, BNI, BRI, dll)
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px', paddingLeft: '26px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '4px', padding: '2px 5px', display: 'flex', alignItems: 'center', height: '18px' }}>
+                      <img src="/logos/bca.svg" alt="BCA" style={{ height: '9px', width: 'auto', objectFit: 'contain' }} />
+                    </div>
+                    <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '4px', padding: '2px 5px', display: 'flex', alignItems: 'center', height: '18px' }}>
+                      <img src="/logos/mandiri.svg" alt="Mandiri" style={{ height: '7px', width: 'auto', objectFit: 'contain' }} />
+                    </div>
+                    <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '4px', padding: '2px 5px', display: 'flex', alignItems: 'center', height: '18px' }}>
+                      <img src="/logos/bni.svg" alt="BNI" style={{ height: '9px', width: 'auto', objectFit: 'contain' }} />
+                    </div>
+                    <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '4px', padding: '2px 5px', display: 'flex', alignItems: 'center', height: '18px' }}>
+                      <img src="/logos/bri.svg" alt="BRI" style={{ height: '9px', width: 'auto', objectFit: 'contain' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* VA / Kode Bayar Section */}
+              <div style={{ background: isLain ? '#FFFBEB' : '#F0F7FF', borderRadius: '12px', padding: '12px 14px', marginBottom: '14px', border: isLain ? '1px solid #FDE68A' : 'none' }}>
+                <p style={{ fontSize: '11px', color: isLain ? '#92400E' : 'var(--color-text-medium)', margin: '0 0 4px', fontWeight: 600 }}>{labelVa}</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                  <p style={{ fontSize: isLain ? '18px' : '20px', fontWeight: 800, color: isLain ? '#92400E' : 'var(--color-primary)', letterSpacing: '0.5px', margin: 0, wordBreak: 'break-all' }}>{vaDisplay}</p>
+                  <button onClick={() => copyToClipboard(vaDisplay, isLain ? 'Nomor Rekening' : 'Kode bayar')} style={{ background: 'transparent', border: isLain ? '1.5px solid #D97706' : '1.5px solid var(--color-primary)', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', color: isLain ? '#D97706' : 'var(--color-primary)', fontSize: '12px', fontWeight: 700, fontFamily: 'Inter, sans-serif', flexShrink: 0 }}>Salin</button>
                 </div>
               </div>
 
-              {/* Jumlah Transfer Section */}
-              <div style={{ background: '#F0F7FF', borderRadius: '12px', padding: '12px 14px', marginBottom: '14px' }}>
-                <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '0 0 4px' }}>Jumlah Transfer</p>
+              {/* Jumlah Transfer Section dengan Alert Kontras */}
+              <div style={{
+                background: isLain ? '#FEF2F2' : '#F0F7FF',
+                borderRadius: '12px',
+                padding: '12px 14px',
+                marginBottom: '14px',
+                border: isLain ? '1.5px solid #FECACA' : 'none'
+              }}>
+                <p style={{ fontSize: '11px', color: isLain ? '#991B1B' : 'var(--color-text-medium)', margin: '0 0 4px', fontWeight: isLain ? 700 : 600 }}>Jumlah Transfer</p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <p style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-primary)', letterSpacing: '1px', margin: 0 }} className="rupiah">
+                  <p style={{ fontSize: '22px', fontWeight: 800, color: isLain ? '#991B1B' : 'var(--color-primary)', letterSpacing: '1px', margin: 0 }} className="rupiah">
                     {formatRupiah(p.total_bayar)}
                   </p>
                   <button
-                    onClick={() => copyToClipboard(String(p.total_bayar), 'Nominal')}
+                    onClick={() => copyToClipboard(String(p.total_bayar), 'Nominal Transfer')}
                     style={{
-                      background: 'transparent',
-                      border: '1.5px solid var(--color-primary)',
+                      background: isLain ? '#991B1B' : 'transparent',
+                      border: isLain ? 'none' : '1.5px solid var(--color-primary)',
                       borderRadius: '8px',
                       padding: '6px 12px',
                       cursor: 'pointer',
-                      color: 'var(--color-primary)',
+                      color: isLain ? '#fff' : 'var(--color-primary)',
                       fontSize: '12px',
-                      fontWeight: 600,
+                      fontWeight: 700,
                       fontFamily: 'Inter, sans-serif',
                     }}
                   >
-                    Salin
+                    Salin Nominal
                   </button>
                 </div>
               </div>
 
-              {/* Warning Box */}
+              {/* Warning Box untuk Nominal Exact Match */}
               <div style={{
-                background: '#FEF3C7',
-                border: '1px solid #FDE68A',
+                background: isLain ? '#FEF2F2' : '#FEF3C7',
+                border: isLain ? '1.5px solid #FCA5A5' : '1px solid #FDE68A',
                 borderRadius: '12px',
                 padding: '12px 14px',
                 display: 'flex',
@@ -149,13 +196,13 @@ function MenungguContent() {
                 alignItems: 'flex-start',
                 marginBottom: '14px',
               }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" style={{ flexShrink: 0, marginTop: '2px' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isLain ? '#DC2626' : '#F59E0B'} strokeWidth="2.5" style={{ flexShrink: 0, marginTop: '2px' }}>
                   <circle cx="12" cy="12" r="10"/>
                   <line x1="12" y1="8" x2="12" y2="12"/>
                   <line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
-                <div style={{ fontSize: '12px', color: '#78350F', lineHeight: 1.5 }}>
-                  <strong>Pastikan nominal exact match.</strong> Transfer dari bank selain BSI harus sama persis dengan jumlah di atas.
+                <div style={{ fontSize: '12px', color: isLain ? '#7F1D1D' : '#78350F', lineHeight: 1.5 }}>
+                  <strong>PENTING: Transfer Harus Sama Persis!</strong> Transfer dari bank selain BSI harus sama persis hingga rupiah terakhir dengan <strong>{formatRupiah(p.total_bayar)}</strong>. Jika nominal berbeda walau 1 rupiah, transaksi akan ditolak oleh sistem.
                 </div>
               </div>
 
