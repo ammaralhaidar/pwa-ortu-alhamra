@@ -79,7 +79,7 @@ export default function UangSakuPage() {
       const res = await fetch('/odoo/api/v1/uang-saku/topup', {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ params: { siswa_id: siswaId, nominal: Number(topupNominal) } }),
+        body: JSON.stringify({ params: { siswa_id: siswaId, nominal: Number(topupNominal), metode: paymentMethod === 'lainnya' ? 'lain' : 'bsi' } }),
       });
       if (res.status === 401) {
         alert('Sesi login Anda telah berakhir. Silakan login kembali.');
@@ -275,11 +275,13 @@ export default function UangSakuPage() {
                   <div style={{ background: '#FEF2F2', border: '1.5px solid #FECACA', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
                     <h4 style={{ color: 'var(--color-danger)', fontSize: '14px', fontWeight: 700, margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                      Perhatian Penting
+                      Perhatian Penting Transfer Bank Lain
                     </h4>
-                    <p style={{ fontSize: '13px', color: '#991B1B', lineHeight: 1.6, margin: '0 0 10px' }}>
-                      Nominal yang Anda transfer nanti <strong>harus sama persis</strong> dengan jumlah tagihan yang tertera. Jika tidak sesuai, pembayaran akan <strong>ditolak</strong> oleh sistem Smartbilling BSI.
-                    </p>
+                    <ul style={{ fontSize: '12px', color: '#991B1B', lineHeight: 1.6, margin: '0 0 12px', paddingLeft: '18px' }}>
+                      <li style={{ marginBottom: '4px' }}><strong>1. Wajib Layanan Real-Time Online (RTO):</strong> Gunakan RTO di m-Banking. <u>JANGAN gunakan BI-Fast</u>.</li>
+                      <li style={{ marginBottom: '4px' }}><strong>2. Hapus Rekening Favorit Lama:</strong> Karena nama rekening BSI selalu berubah dinamis, <u>hapus nomor rekening lama dari daftar favorit m-Banking Anda</u>, lalu input ulang sebagai Rekening Baru.</li>
+                      <li><strong>3. Nominal Tepat:</strong> Transfer harus sama persis hingga digit terakhir.</li>
+                    </ul>
                     <div style={{ background: '#fff', borderRadius: '10px', padding: '12px', textAlign: 'center', border: '1px solid #FECACA', marginBottom: '12px' }}>
                       <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '0 0 4px' }}>Total yang harus ditransfer</p>
                       <p style={{ fontSize: '22px', fontWeight: 800, color: 'var(--color-danger)', margin: 0 }} className="rupiah">{formatRupiah(Number(topupNominal) + adminAmount)}</p>
@@ -289,7 +291,7 @@ export default function UangSakuPage() {
                       <div style={{ width: '22px', height: '22px', borderRadius: '6px', flexShrink: 0, marginTop: '1px', border: `2px solid ${confirmChecked ? 'var(--color-primary)' : 'var(--color-border)'}`, background: confirmChecked ? 'var(--color-primary)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {confirmChecked && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
                       </div>
-                      <span style={{ fontSize: '13px', color: '#991B1B', lineHeight: 1.5 }}>Saya mengerti dan akan mentransfer nominal yang <strong>sama persis</strong>.</span>
+                      <span style={{ fontSize: '13px', color: '#991B1B', lineHeight: 1.5 }}>Saya mengerti 3 aturan di atas dan akan mentransfer via <strong>RTO</strong> dengan nominal <strong>sama persis</strong>.</span>
                     </button>
                   </div>
                 )}

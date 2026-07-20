@@ -185,26 +185,86 @@ function MenungguContent() {
                 </div>
               </div>
 
-              {/* Warning Box untuk Nominal Exact Match */}
-              <div style={{
-                background: isLain ? '#FEF2F2' : '#FEF3C7',
-                border: isLain ? '1.5px solid #FCA5A5' : '1px solid #FDE68A',
-                borderRadius: '12px',
-                padding: '12px 14px',
-                display: 'flex',
-                gap: '10px',
-                alignItems: 'flex-start',
-                marginBottom: '14px',
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isLain ? '#DC2626' : '#F59E0B'} strokeWidth="2.5" style={{ flexShrink: 0, marginTop: '2px' }}>
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="12"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                <div style={{ fontSize: '12px', color: isLain ? '#7F1D1D' : '#78350F', lineHeight: 1.5 }}>
-                  <strong>PENTING: Transfer Harus Sama Persis!</strong> Transfer dari bank selain BSI harus sama persis hingga rupiah terakhir dengan <strong>{formatRupiah(p.total_bayar)}</strong>. Jika nominal berbeda walau 1 rupiah, transaksi akan ditolak oleh sistem.
+              {/* Warning Box untuk Bank Lain: RTO & Hapus Rekening Favorit */}
+              {isLain ? (
+                <>
+                  <div style={{
+                    background: '#FEF2F2',
+                    border: '1.5px solid #FCA5A5',
+                    borderRadius: '12px',
+                    padding: '12px 14px',
+                    display: 'flex',
+                    gap: '10px',
+                    alignItems: 'flex-start',
+                    marginBottom: '10px',
+                  }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" style={{ flexShrink: 0, marginTop: '2px' }}>
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                    <div style={{ fontSize: '12px', color: '#7F1D1D', lineHeight: 1.5 }}>
+                      <strong>1. WAJIB OPSI TRANSFER REAL-TIME ONLINE (RTO):</strong> Saat transfer antarbank di m-Banking (BCA/Mandiri/BRI/BNI), <strong>pilih metode Transfer Real-Time Online (RTO)</strong>. <u>JANGAN pilih BI-Fast</u> karena Virtual Account BSI tidak mendukung BI-Fast.
+                    </div>
+                  </div>
+
+                  <div style={{
+                    background: '#FFFBEB',
+                    border: '1.5px solid #FDE68A',
+                    borderRadius: '12px',
+                    padding: '12px 14px',
+                    display: 'flex',
+                    gap: '10px',
+                    alignItems: 'flex-start',
+                    marginBottom: '10px',
+                  }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.5" style={{ flexShrink: 0, marginTop: '2px' }}>
+                      <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                    <div style={{ fontSize: '12px', color: '#78350F', lineHeight: 1.5 }}>
+                      <strong>2. HAPUS REKENING FAVORIT TERSIMPAN:</strong> Karena nama pemilik rekening BSI berubah dinamis mengikuti nominal (contoh: <i>102000 ABDULLAH</i>), <u>JANGAN memilih dari Daftar Rekening Tersimpan/Favorit m-Banking Anda</u>. <strong>Hapus nomor rekening lama dari favorit m-Banking</strong>, lalu input ulang sebagai Rekening Baru.
+                    </div>
+                  </div>
+
+                  <div style={{
+                    background: '#FEF2F2',
+                    border: '1.5px solid #FCA5A5',
+                    borderRadius: '12px',
+                    padding: '12px 14px',
+                    display: 'flex',
+                    gap: '10px',
+                    alignItems: 'flex-start',
+                    marginBottom: '14px',
+                  }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" style={{ flexShrink: 0, marginTop: '2px' }}>
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="8" x2="12" y2="12"/>
+                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <div style={{ fontSize: '12px', color: '#7F1D1D', lineHeight: 1.5 }}>
+                      <strong>3. NOMINAL TRANSFER HARUS SAMA PERSIS:</strong> Transfer dari bank selain BSI harus sama persis hingga rupiah terakhir dengan <strong>{formatRupiah(p.total_bayar)}</strong>. Jika nominal kurang/lebih walau 1 rupiah, transaksi ditolak oleh sistem.
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div style={{
+                  background: '#FEF3C7',
+                  border: '1px solid #FDE68A',
+                  borderRadius: '12px',
+                  padding: '12px 14px',
+                  display: 'flex',
+                  gap: '10px',
+                  alignItems: 'flex-start',
+                  marginBottom: '14px',
+                }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2.5" style={{ flexShrink: 0, marginTop: '2px' }}>
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <div style={{ fontSize: '12px', color: '#78350F', lineHeight: 1.5 }}>
+                    <strong>Pastikan data transaksi benar.</strong> Lakukan pembayaran melalui Byond by BSI sebelum batas waktu berakhir.
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
                 <CountdownTimer targetDateStr={p.tanggal_expired} />

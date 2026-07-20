@@ -266,6 +266,33 @@ function SuksesContent() {
                 </p>
               </div>
 
+              {/* Warning Box RTO & Hapus Rekening Favorit */}
+              <div style={{
+                background: '#FEF2F2', border: '1.5px solid #FCA5A5', borderRadius: '12px',
+                padding: '12px 14px', display: 'flex', gap: '10px', alignItems: 'flex-start',
+                marginBottom: '10px',
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" style={{ flexShrink: 0, marginTop: '2px' }}>
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+                <div style={{ fontSize: '12px', color: '#7F1D1D', lineHeight: 1.5 }}>
+                  <strong>1. WAJIB OPSI TRANSFER REAL-TIME ONLINE (RTO):</strong> saat memilih metode transfer di m-Banking (BCA/Mandiri/BRI/BNI), <strong>pilih Transfer Real-Time Online (RTO)</strong>. <u>JANGAN BI-Fast</u> karena Virtual Account BSI tidak mendukung BI-Fast.
+                </div>
+              </div>
+
+              <div style={{
+                background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: '12px',
+                padding: '12px 14px', display: 'flex', gap: '10px', alignItems: 'flex-start',
+                marginBottom: '12px',
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.5" style={{ flexShrink: 0, marginTop: '2px' }}>
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+                <div style={{ fontSize: '12px', color: '#78350F', lineHeight: 1.5 }}>
+                  <strong>2. HAPUS REKENING FAVORIT TERSIMPAN:</strong> Nama pemilik rekening BSI selalu berubah dinamis sesuai nominal. <u>JANGAN pilih dari Rekening Favorit Tersimpan m-Banking Anda</u>. <strong>Hapus nomor rekening lama dari favorit m-Banking</strong>, lalu tambahkan sebagai Rekening Baru.
+                </div>
+              </div>
+
               {/* Countdown + Batas Waktu */}
               <div style={{ textAlign: 'center', borderTop: '1px solid var(--color-border)', paddingTop: '12px', marginBottom: '8px' }}>
                 <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '0 0 8px' }}>Sisa Waktu Pembayaran</p>
@@ -307,9 +334,10 @@ function SuksesContent() {
               </h4>
               <ol style={{ fontSize: '13px', color: 'var(--color-text-high)', paddingLeft: '20px', lineHeight: 1.7, margin: 0 }}>
                 <li>Buka M-Banking Anda (Livin, BCA Mobile, BRImo, dll).</li>
-                <li>Pilih menu <strong>Transfer Antar Bank</strong>.</li>
-                <li>Pilih bank tujuan <strong>BSI (Kode 451)</strong>.</li>
-                <li>Masukkan rekening tujuan: <strong>9005065{kodeBayar}</strong>.</li>
+                <li><strong>Hapus rekening tersimpan lama di m-Banking Anda dari daftar favorit</strong> jika pernah disimpan sebelumnya.</li>
+                <li>Pilih menu <strong>Transfer Antar Bank ➔ Bank BSI (Kode 451)</strong>.</li>
+                <li>Masukkan rekening tujuan (17 Digit): <strong>9005065{kodeBayar}</strong>.</li>
+                <li>Pilih metode transfer: <strong>Real-Time Online / RTO (WAJIB RTO, JANGAN BI-Fast)</strong>.</li>
                 <li>Masukkan nominal: <strong>{formatRupiah(total)}</strong> — <strong style={{ color: 'var(--color-danger)' }}>HARUS SAMA PERSIS!</strong></li>
                 <li>Pastikan data benar, selesaikan transaksi.</li>
               </ol>

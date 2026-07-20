@@ -211,14 +211,19 @@ export default function PanduanPembayaran() {
               >
                 <li>Buka M-Banking Anda (Livin, BCA Mobile, BRImo, dll).</li>
                 <li>
+                  Jika rekening pernah disimpan, <strong>Hapus dari Daftar Favorit m-Banking Anda terlebih dahulu</strong>, lalu input ulang sebagai Rekening Baru.
+                </li>
+                <li>
                   Pilih menu <strong>Transfer Antar Bank</strong>.
                 </li>
                 <li>
                   Pilih bank tujuan <strong>BSI (Kode 451)</strong>.
                 </li>
                 <li>
-                  Masukkan rekening tujuan: <strong>9005065</strong> diikuti
-                  Kode Bayar.
+                  Masukkan rekening tujuan: <strong>9005065</strong> diikuti Kode Bayar (17 Digit).
+                </li>
+                <li>
+                  Pilih metode transfer: <strong>Real-Time Online / RTO (WAJIB RTO, JANGAN BI-Fast)</strong>.
                 </li>
                 <li>
                   <strong>Masukkan nominal tagihan (HARUS SAMA PERSIS).</strong>
