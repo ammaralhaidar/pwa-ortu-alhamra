@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
+  color-scheme: light !important;
+  supported-color-schemes: light !important;
   --color-primary: #174D7F;
   --color-primary-dark: #0f3659;
   --color-accent: #009A34;
@@ -23,16 +25,43 @@
 }
 
 html {
+  color-scheme: light !important;
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: var(--color-bg);
+  background-color: #CBD5E1;
   color: var(--color-text-high);
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Mobile Frame Container for Desktop & Mobile */
+.app-container {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  background-color: var(--color-bg);
+  position: relative;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Force Light Mode Overrides for OS Dark Mode */
+@media (prefers-color-scheme: dark) {
+  :root, html, body {
+    color-scheme: light !important;
+    background-color: #CBD5E1 !important;
+    color: var(--color-text-high) !important;
+  }
+  .app-container {
+    background-color: var(--color-bg) !important;
+    color: var(--color-text-high) !important;
+  }
 }
 
 /* Utility */
