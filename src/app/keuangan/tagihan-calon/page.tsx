@@ -291,11 +291,6 @@ export default function TagihanCalonPage() {
                         Sebagian dibayar pada {formatDate(inv.paid_on)}
                       </p>
                     )}
-                    {inv.payment_state !== 'paid' && inv.invoice_date && (
-                      <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '4px 0 0' }}>
-                        Jatuh tempo: {formatDate(inv.invoice_date)}
-                      </p>
-                    )}
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <p style={{ fontWeight: 700, fontSize: "15px", color: "var(--color-danger)", margin: 0 }} className="rupiah">
