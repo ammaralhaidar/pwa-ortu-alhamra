@@ -326,30 +326,132 @@ export default function TagihanCalonPage() {
         </Link>
       </div>
 
+      {/* Alert Kode Bayar Aktif Modal */}
       {activePaymentAlert && (
-        <div style={{
-          margin: "0 16px 16px",
-          padding: "16px",
-          background: "#FEF3C7",
-          border: "1px solid #FCD34D",
-          borderRadius: "12px",
-          position: "relative",
-          zIndex: 40,
-        }}>
-          <p style={{ fontSize: "14px", fontWeight: 600, margin: "0 0 4px" }}>
-            Anda memiliki kode bayar yang masih aktif
-          </p>
-          <p style={{ fontSize: "13px", color: "var(--color-text-medium)", margin: "0 0 8px" }}>
-            Kode: {activePaymentAlert.kode_bayar} — {formatRupiah(activePaymentAlert.total_bayar)}
-          </p>
-          <Link href="/keuangan/menunggu-pembayaran" style={{
-            color: "var(--color-primary)",
-            fontSize: "13px",
-            fontWeight: 600,
-            textDecoration: "none",
-          }}>
-            Lihat Detail →
-          </Link>
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.6)",
+            zIndex: 70,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "24px",
+          }}
+        >
+          <div
+            style={{
+              background: "var(--color-surface)",
+              borderRadius: "20px",
+              padding: "24px",
+              width: "100%",
+              maxWidth: "400px",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+            }}
+          >
+            <div
+              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "24px",
+                background: "#FEF2F2",
+                color: "var(--color-danger)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: "16px",
+              }}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <h3
+              style={{ fontSize: "18px", fontWeight: 700, marginBottom: "8px" }}
+            >
+              Kode Bayar Tagihan Aktif
+            </h3>
+            <p
+              style={{
+                fontSize: "14px",
+                color: "var(--color-text-medium)",
+                lineHeight: 1.5,
+                marginBottom: "16px",
+              }}
+            >
+              Anda memiliki kode bayar yang masih aktif sebesar{" "}
+              <strong
+                className="rupiah"
+                style={{ color: "var(--color-text-high)" }}
+              >
+                {formatRupiah(activePaymentAlert.total_bayar)}
+              </strong>{" "}
+              dengan tenggat waktu pada{" "}
+              <strong>{formatDate(activePaymentAlert.tanggal_expired)}</strong>.
+            </p>
+            <p
+              style={{
+                fontSize: "13px",
+                color: "var(--color-danger)",
+                background: "#FEF2F2",
+                padding: "10px 12px",
+                borderRadius: "8px",
+                marginBottom: "24px",
+              }}
+            >
+              Membuat kode bayar baru akan <strong>membatalkan otomatis</strong>{" "}
+              kode bayar yang lama.
+            </p>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+            >
+              <button
+                onClick={() => router.push("/keuangan/menunggu-pembayaran")}
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  background: "var(--color-primary)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "12px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Lihat Tagihan Lama
+              </button>
+              <button
+                onClick={() => {
+                  setActivePaymentAlert(null);
+                  showPreviewModal();
+                }}
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  background: "#F1F5F9",
+                  color: "var(--color-text-high)",
+                  border: "none",
+                  borderRadius: "12px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Tetap Buat Baru
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -359,8 +461,10 @@ export default function TagihanCalonPage() {
           style={{
             position: "fixed",
             bottom: "var(--bottom-nav-height)",
-            left: 0,
-            right: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "100%",
+            maxWidth: "430px",
             zIndex: 45,
             background: "var(--color-surface)",
             borderTop: "1px solid var(--color-border)",

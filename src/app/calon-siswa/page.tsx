@@ -42,8 +42,34 @@ export default function CalonSiswaPage() {
   const [savedMessage, setSavedMessage] = useState('');
   const [formData, setFormData] = useState<Record<string, string | number>>({});
   const [readOnlyData, setReadOnlyData] = useState<Record<string, string | number>>({});
+  const [refPropinsi, setRefPropinsi] = useState<Array<{ id: number; name: string }>>([]);
+  const [refKota, setRefKota] = useState<Array<{ id: number; name: string }>>([]);
+  const [refKecamatan, setRefKecamatan] = useState<Array<{ id: number; name: string }>>([]);
   
   const calonSiswaId = getCalonSiswaId();
+
+  const fetchKota = (propId: number | string) => {
+    if (!propId) { setRefKota([]); setRefKecamatan([]); return; }
+    fetch(`/odoo/api/v1/referensi/kota?propinsi_id=${propId}`, { credentials: 'include' })
+      .then(res => res.json())
+      .then(d => { if (d.success) setRefKota(d.data); })
+      .catch(() => {});
+  };
+
+  const fetchKecamatan = (kotaId: number | string) => {
+    if (!kotaId) { setRefKecamatan([]); return; }
+    fetch(`/odoo/api/v1/referensi/kecamatan?kota_id=${kotaId}`, { credentials: 'include' })
+      .then(res => res.json())
+      .then(d => { if (d.success) setRefKecamatan(d.data); })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    fetch('/odoo/api/v1/referensi/propinsi', { credentials: 'include' })
+      .then(res => res.json())
+      .then(d => { if (d.success) setRefPropinsi(d.data); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const user = getUser();
@@ -64,6 +90,8 @@ export default function CalonSiswaPage() {
             email_orangtua: d.email_orangtua,
           });
           setFormData({ ...d });
+          if (d.propinsi_id) fetchKota(d.propinsi_id);
+          if (d.kota_id) fetchKecamatan(d.kota_id);
         }
       })
       .catch(() => {})
@@ -73,6 +101,26 @@ export default function CalonSiswaPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePropinsiChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value ? parseInt(e.target.value, 10) : '';
+    setFormData(prev => ({ ...prev, propinsi_id: val, kota_id: '', kecamatan_id: '' }));
+    setRefKota([]);
+    setRefKecamatan([]);
+    if (val) fetchKota(val);
+  };
+
+  const handleKotaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value ? parseInt(e.target.value, 10) : '';
+    setFormData(prev => ({ ...prev, kota_id: val, kecamatan_id: '' }));
+    setRefKecamatan([]);
+    if (val) fetchKecamatan(val);
+  };
+
+  const handleKecamatanChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value ? parseInt(e.target.value, 10) : '';
+    setFormData(prev => ({ ...prev, kecamatan_id: val }));
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -85,6 +133,7 @@ export default function CalonSiswaPage() {
         'name', 'nisn', 'panggilan', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir',
         'gol_darah', 'agama', 'kewarganegaraan', 'nik', 'anak_ke', 'jml_saudara_kandung',
         'bahasa', 'cita_cita', 'rt_rw', 'street', 'street2', 'city', 'zip',
+        'propinsi_id', 'kota_id', 'kecamatan_id',
         'asal_sekolah', 'kepsek_sekolah_asal', 'status_sekolah_asal', 'telp_asal_sek',
         'alamat_asal_sek', 'prestasi_sebelum',
         'nama_ayah', 'hp_ayah', 'ayah_tmp_lahir', 'ayah_tgl_lahir', 'ayah_warganegara',
@@ -109,7 +158,8 @@ export default function CalonSiswaPage() {
         setSavedMessage('Data berhasil disimpan');
         setTimeout(() => setSavedMessage(''), 3000);
       } else {
-        setSavedMessage('Gagal menyimpan: ' + (d.error?.message || 'Unknown error'));
+        const errMsg = d.error?.message || d.message || (typeof d.error === 'string' ? d.error : 'Unknown error');
+        setSavedMessage('Gagal menyimpan: ' + errMsg);
       }
     } catch {
       setSavedMessage('Koneksi gagal. Coba lagi.');
@@ -280,21 +330,71 @@ export default function CalonSiswaPage() {
                   <input name="rt_rw" value={formData.rt_rw || ''} onChange={handleChange} style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>Kota/Kabupaten</label>
-                  <input name="city" value={formData.city || ''} onChange={handleChange} style={inputStyle} required />
-                </div>
-                <div>
                   <label style={labelStyle}>Kode Pos</label>
                   <input name="zip" value={formData.zip || ''} onChange={handleChange} style={inputStyle} />
                 </div>
               </div>
               <div>
-                <label style={labelStyle}>Provinsi (Sistem)</label>
-                <input readOnly value={formData.propinsi_name || '-'} style={{ ...inputStyle, background: '#F1F5F9' }} />
+                <label style={labelStyle}>Provinsi</label>
+                <select
+                  name="propinsi_id"
+                  value={formData.propinsi_id || ''}
+                  onChange={handlePropinsiChange}
+                  style={inputStyle}
+                >
+                  <option value="">-- Pilih Provinsi --</option>
+                  {refPropinsi.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
-                <label style={labelStyle}>Kecamatan (Sistem)</label>
-                <input readOnly value={formData.kecamatan_name || '-'} style={{ ...inputStyle, background: '#F1F5F9' }} />
+                <label style={labelStyle}>Kota/Kabupaten</label>
+                <select
+                  name="kota_id"
+                  value={formData.kota_id || ''}
+                  onChange={handleKotaChange}
+                  disabled={!formData.propinsi_id}
+                  style={{
+                    ...inputStyle,
+                    background: !formData.propinsi_id ? '#F1F5F9' : '#fff',
+                    cursor: !formData.propinsi_id ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  <option value="">
+                    {!formData.propinsi_id ? '-- Pilih Provinsi Terlebih Dahulu --' : '-- Pilih Kota/Kabupaten --'}
+                  </option>
+                  {refKota.map((k) => (
+                    <option key={k.id} value={k.id}>
+                      {k.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Kecamatan</label>
+                <select
+                  name="kecamatan_id"
+                  value={formData.kecamatan_id || ''}
+                  onChange={handleKecamatanChange}
+                  disabled={!formData.kota_id}
+                  style={{
+                    ...inputStyle,
+                    background: !formData.kota_id ? '#F1F5F9' : '#fff',
+                    cursor: !formData.kota_id ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  <option value="">
+                    {!formData.kota_id ? '-- Pilih Kota/Kabupaten Terlebih Dahulu --' : '-- Pilih Kecamatan --'}
+                  </option>
+                  {refKecamatan.map((kc) => (
+                    <option key={kc.id} value={kc.id}>
+                      {kc.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>

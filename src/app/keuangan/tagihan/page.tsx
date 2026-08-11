@@ -489,8 +489,10 @@ export default function TagihanPage() {
           style={{
             position: "fixed",
             bottom: "var(--bottom-nav-height)",
-            left: 0,
-            right: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "100%",
+            maxWidth: "430px",
             zIndex: 45,
             background: "var(--color-surface)",
             borderTop: "1px solid var(--color-border)",

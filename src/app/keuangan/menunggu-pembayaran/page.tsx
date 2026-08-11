@@ -7,6 +7,7 @@ import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
 import CountdownTimer from '@/components/CountdownTimer';
 import PanduanPembayaran from '@/components/PanduanPembayaran';
+import PanduanBankLainTab from '@/components/PanduanBankLainTab';
 import { formatRupiah, formatFullDateTime, odooToUtc } from '@/lib/utils';
 import {
   registerServiceWorker,
@@ -19,6 +20,7 @@ function MenungguContent() {
   const targetId = searchParams.get('id');
   const [pembayaran, setPembayaran] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/odoo/api/v1/pembayaran/aktif', { credentials: 'include' })
@@ -26,9 +28,10 @@ function MenungguContent() {
       .finally(() => setLoading(false));
   }, []);
 
-  const copyToClipboard = (text: string, label?: string) => {
+  const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text).catch(() => {});
-    alert(`${label || 'Teks'} berhasil disalin!`);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
   };
 
   const now = Date.now();
@@ -144,106 +147,145 @@ function MenungguContent() {
                 </div>
               )}
 
-              {/* VA / Kode Bayar Section */}
-              <div style={{ background: isLain ? '#FFFBEB' : '#F0F7FF', borderRadius: '12px', padding: '12px 14px', marginBottom: '14px', border: isLain ? '1px solid #FDE68A' : 'none' }}>
-                <p style={{ fontSize: '11px', color: isLain ? '#92400E' : 'var(--color-text-medium)', margin: '0 0 4px', fontWeight: 600 }}>{labelVa}</p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                  <p style={{ fontSize: isLain ? '18px' : '20px', fontWeight: 800, color: isLain ? '#92400E' : 'var(--color-primary)', letterSpacing: '0.5px', margin: 0, wordBreak: 'break-all' }}>{vaDisplay}</p>
-                  <button onClick={() => copyToClipboard(vaDisplay, isLain ? 'Nomor Rekening' : 'Kode bayar')} style={{ background: 'transparent', border: isLain ? '1.5px solid #D97706' : '1.5px solid var(--color-primary)', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', color: isLain ? '#D97706' : 'var(--color-primary)', fontSize: '12px', fontWeight: 700, fontFamily: 'Inter, sans-serif', flexShrink: 0 }}>Salin</button>
-                </div>
-              </div>
-
-              {/* Jumlah Transfer Section dengan Alert Kontras */}
-              <div style={{
-                background: isLain ? '#FEF2F2' : '#F0F7FF',
-                borderRadius: '12px',
-                padding: '12px 14px',
-                marginBottom: '14px',
-                border: isLain ? '1.5px solid #FECACA' : 'none'
-              }}>
-                <p style={{ fontSize: '11px', color: isLain ? '#991B1B' : 'var(--color-text-medium)', margin: '0 0 4px', fontWeight: isLain ? 700 : 600 }}>Jumlah Transfer</p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <p style={{ fontSize: '22px', fontWeight: 800, color: isLain ? '#991B1B' : 'var(--color-primary)', letterSpacing: '1px', margin: 0 }} className="rupiah">
-                    {formatRupiah(p.total_bayar)}
-                  </p>
-                  <button
-                    onClick={() => copyToClipboard(String(p.total_bayar), 'Nominal Transfer')}
-                    style={{
-                      background: isLain ? '#991B1B' : 'transparent',
-                      border: isLain ? 'none' : '1.5px solid var(--color-primary)',
-                      borderRadius: '8px',
-                      padding: '6px 12px',
-                      cursor: 'pointer',
-                      color: isLain ? '#fff' : 'var(--color-primary)',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      fontFamily: 'Inter, sans-serif',
-                    }}
-                  >
-                    Salin Nominal
-                  </button>
-                </div>
-              </div>
-
-              {/* Warning Box untuk Bank Lain: RTO & Hapus Rekening Favorit */}
+              {/* HERO ACTION BOX FOR NON-BSI */}
               {isLain ? (
-                <>
-                  <div style={{
-                    background: '#FEF2F2',
-                    border: '1.5px solid #FCA5A5',
-                    borderRadius: '12px',
-                    padding: '12px 14px',
-                    display: 'flex',
-                    gap: '10px',
-                    alignItems: 'flex-start',
-                    marginBottom: '10px',
-                  }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" style={{ flexShrink: 0, marginTop: '2px' }}>
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                    </svg>
-                    <div style={{ fontSize: '12px', color: '#7F1D1D', lineHeight: 1.5 }}>
-                      <strong>1. WAJIB OPSI TRANSFER REAL-TIME ONLINE (RTO):</strong> Saat transfer antarbank di m-Banking (BCA/Mandiri/BRI/BNI), <strong>pilih metode Transfer Real-Time Online (RTO)</strong>. <u>JANGAN pilih BI-Fast</u> karena Virtual Account BSI tidak mendukung BI-Fast.
+                <div style={{ background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)', borderRadius: '16px', padding: '16px', marginBottom: '14px', border: '1.5px solid #FDE68A' }}>
+                  {/* Rekening Tujuan BSI */}
+                  <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px dashed #FCD34D' }}>
+                    <p style={{ fontSize: '11px', color: '#92400E', margin: '0 0 4px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      1. Nomor Rekening Tujuan (BSI)
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <p style={{ fontSize: '18px', fontWeight: 800, color: '#78350F', letterSpacing: '0.5px', margin: 0, wordBreak: 'break-all' }}>
+                        {vaDisplay}
+                      </p>
+                      <button
+                        onClick={() => copyToClipboard(vaDisplay, `va-${p.id}`)}
+                        style={{
+                          background: copiedKey === `va-${p.id}` ? '#16A34A' : '#D97706',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '6px 14px',
+                          cursor: 'pointer',
+                          color: '#fff',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          fontFamily: 'Inter, sans-serif',
+                          transition: 'all 0.2s ease',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {copiedKey === `va-${p.id}` ? '✓ Tersalin!' : 'Salin Rekening'}
+                      </button>
                     </div>
                   </div>
 
-                  <div style={{
-                    background: '#FFFBEB',
-                    border: '1.5px solid #FDE68A',
-                    borderRadius: '12px',
-                    padding: '12px 14px',
+                  {/* Nominal Transfer Pas */}
+                  <div>
+                    <p style={{ fontSize: '11px', color: '#991B1B', margin: '0 0 4px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      2. Nominal Transfer (Harus Pas)
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <p style={{ fontSize: '22px', fontWeight: 800, color: '#991B1B', letterSpacing: '0.5px', margin: 0 }} className="rupiah">
+                        {formatRupiah(p.total_bayar)}
+                      </p>
+                      <button
+                        onClick={() => copyToClipboard(String(p.total_bayar), `total-${p.id}`)}
+                        style={{
+                          background: copiedKey === `total-${p.id}` ? '#16A34A' : '#DC2626',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '6px 14px',
+                          cursor: 'pointer',
+                          color: '#fff',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          fontFamily: 'Inter, sans-serif',
+                          transition: 'all 0.2s ease',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {copiedKey === `total-${p.id}` ? '✓ Tersalin!' : 'Salin Nominal'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* BSI Kode Bayar Section */
+                <div style={{ background: '#F0F7FF', borderRadius: '12px', padding: '12px 14px', marginBottom: '14px' }}>
+                  <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '0 0 4px', fontWeight: 600 }}>{labelVa}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <p style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-primary)', letterSpacing: '0.5px', margin: 0, wordBreak: 'break-all' }}>{vaDisplay}</p>
+                    <button
+                      onClick={() => copyToClipboard(vaDisplay, `va-${p.id}`)}
+                      style={{
+                        background: copiedKey === `va-${p.id}` ? '#16A34A' : 'transparent',
+                        border: copiedKey === `va-${p.id}` ? 'none' : '1.5px solid var(--color-primary)',
+                        borderRadius: '8px',
+                        padding: '6px 12px',
+                        cursor: 'pointer',
+                        color: copiedKey === `va-${p.id}` ? '#fff' : 'var(--color-primary)',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        fontFamily: 'Inter, sans-serif',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {copiedKey === `va-${p.id}` ? '✓ Tersalin!' : 'Salin'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* CARD 3 ATURAN EMAS UNTUK BANK LAIN */}
+              {isLain ? (
+                <div
+                  style={{
+                    background: '#F8FAFC',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: '16px',
+                    padding: '14px',
+                    marginBottom: '16px',
                     display: 'flex',
+                    flexDirection: 'column',
                     gap: '10px',
-                    alignItems: 'flex-start',
-                    marginBottom: '10px',
-                  }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.5" style={{ flexShrink: 0, marginTop: '2px' }}>
-                      <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  }}
+                >
+                  <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text-high)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.5">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
-                    <div style={{ fontSize: '12px', color: '#78350F', lineHeight: 1.5 }}>
-                      <strong>2. HAPUS REKENING FAVORIT TERSIMPAN:</strong> Karena nama pemilik rekening BSI berubah dinamis mengikuti nominal (contoh: <i>102000 ABDULLAH</i>), <u>JANGAN memilih dari Daftar Rekening Tersimpan/Favorit m-Banking Anda</u>. <strong>Hapus nomor rekening lama dari favorit m-Banking</strong>, lalu input ulang sebagai Rekening Baru.
+                    3 Aturan Penting Pembayaran Non-BSI
+                  </h4>
+
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', background: '#FEF2F2', padding: '10px 12px', borderRadius: '10px', border: '1px solid #FECACA' }}>
+                    <span style={{ fontSize: '16px', flexShrink: 0 }}>⚡</span>
+                    <div style={{ fontSize: '12px', color: '#7F1D1D', lineHeight: 1.4 }}>
+                      <strong>1. WAJIB PILIH RTO (Real-Time Online):</strong> Saat transfer di m-Banking, wajib pilih metode <strong>RTO</strong>. <u>JANGAN pilih BI-Fast</u>.
                     </div>
                   </div>
 
-                  <div style={{
-                    background: '#FEF2F2',
-                    border: '1.5px solid #FCA5A5',
-                    borderRadius: '12px',
-                    padding: '12px 14px',
-                    display: 'flex',
-                    gap: '10px',
-                    alignItems: 'flex-start',
-                    marginBottom: '14px',
-                  }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" style={{ flexShrink: 0, marginTop: '2px' }}>
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="12" y1="8" x2="12" y2="12"/>
-                      <line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                    <div style={{ fontSize: '12px', color: '#7F1D1D', lineHeight: 1.5 }}>
-                      <strong>3. NOMINAL TRANSFER HARUS SAMA PERSIS:</strong> Transfer dari bank selain BSI harus sama persis hingga rupiah terakhir dengan <strong>{formatRupiah(p.total_bayar)}</strong>. Jika nominal kurang/lebih walau 1 rupiah, transaksi ditolak oleh sistem.
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', background: '#FFFBEB', padding: '10px 12px', borderRadius: '10px', border: '1px solid #FDE68A' }}>
+                    <span style={{ fontSize: '16px', flexShrink: 0 }}>🔄</span>
+                    <div style={{ fontSize: '12px', color: '#78350F', lineHeight: 1.4 }}>
+                      <strong>2. HAPUS REKENING FAVORIT TERSIMPAN:</strong> Nama rekening BSI berubah dinamis. <u>Hapus favorit lama di m-Banking</u> dan input sebagai Rekening Baru.
                     </div>
                   </div>
-                </>
+
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', background: '#FEF2F2', padding: '10px 12px', borderRadius: '10px', border: '1px solid #FECACA' }}>
+                    <span style={{ fontSize: '16px', flexShrink: 0 }}>🎯</span>
+                    <div style={{ fontSize: '12px', color: '#7F1D1D', lineHeight: 1.4 }}>
+                      <strong>3. NOMINAL HARUS SAMA PERSIS:</strong> Masukkan nominal transfer persis hingga rupiah terakhir dengan <strong>{formatRupiah(p.total_bayar)}</strong>.
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* TAB PANDUAN BANK LAIN */}
+              {isLain ? (
+                <div style={{ marginBottom: '16px' }}>
+                  <PanduanBankLainTab kodeBayar={p.kode_bayar} total={p.total_bayar} />
+                </div>
               ) : (
                 <div style={{
                   background: '#FEF3C7',
