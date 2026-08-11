@@ -26,7 +26,8 @@ export function formatDate(dateStr: string): string {
 
 export function formatDateTime(dateStr: string): string {
   if (!dateStr) return '-';
-  const date = new Date(dateStr);
+  const cleanStr = dateStr.includes('T') || dateStr.endsWith('Z') ? dateStr : dateStr.replace(' ', 'T');
+  const date = new Date(cleanStr);
   return new Intl.DateTimeFormat('id-ID', {
     day: 'numeric',
     month: 'short',
