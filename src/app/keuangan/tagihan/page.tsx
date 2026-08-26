@@ -14,6 +14,7 @@ interface Invoice {
   nama_tagihan?: string;
   komponen_id?: [number, string] | false;
   invoice_date: string;
+  invoice_date_due?: string | null;
   amount_total_signed: number;
   amount_residual_signed: number;
   payment_state: string;
@@ -417,9 +418,9 @@ export default function TagihanPage() {
                         Sebagian dibayar pada {formatDate(inv.paid_on)}
                       </p>
                     )}
-                    {inv.payment_state !== 'paid' && inv.invoice_date && (
+                    {inv.payment_state !== 'paid' && (inv.invoice_date_due || inv.invoice_date) && (
                       <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '4px 0 0' }}>
-                        Jatuh tempo: {formatDate(inv.invoice_date)}
+                        Jatuh tempo: {formatDate(inv.invoice_date_due || inv.invoice_date)}
                       </p>
                     )}
                   </div>
