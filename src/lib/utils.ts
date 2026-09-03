@@ -14,45 +14,61 @@ export function formatRupiah(amount: number): string {
   }).format(amount);
 }
 
-export function formatDate(dateStr: string): string {
-  if (!dateStr) return '-';
-  const date = new Date(dateStr);
-  return new Intl.DateTimeFormat('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(date);
-}
-
-export function formatDateTime(dateStr: string): string {
-  if (!dateStr) return '-';
-  const cleanStr = dateStr.includes('T') || dateStr.endsWith('Z') ? dateStr : dateStr.replace(' ', 'T');
-  const date = new Date(cleanStr);
-  return new Intl.DateTimeFormat('id-ID', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
-}
-
 export function odooToUtc(dateStr: string): string {
   if (!dateStr) return '';
-  if (dateStr.includes('T')) return dateStr;
-  return dateStr.replace(' ', 'T') + 'Z';
+  if (dateStr.endsWith('Z') || dateStr.includes('+')) return dateStr;
+  const iso = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
+  return iso.endsWith('Z') ? iso : iso + 'Z';
 }
 
-export function formatFullDateTime(dateStr: string): string {
+export function formatDate(dateStr: string): string {
   if (!dateStr) return '-';
   const date = new Date(odooToUtc(dateStr));
   return new Intl.DateTimeFormat('id-ID', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: 'Asia/Jakarta',
+  }).format(date);
+}
+
+export function formatShortDate(dateStr: string): string {
+  if (!dateStr) return '-';
+  const date = new Date(odooToUtc(dateStr));
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = String(date.getFullYear()).slice(-2);
+  return `${d}/${m}/${y}`;
+}
+
+export function formatDateTime(dateStr: string): string {
+  if (!dateStr) return '-';
+  const date = new Date(odooToUtc(dateStr));
+  const formatted = new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(date) + ' WIB'; // Assume WIB as local for display context
+    hour12: false,
+    timeZone: 'Asia/Jakarta',
+  }).format(date);
+  return formatted.replace('.', ':') + ' WIB';
+}
+
+export function formatFullDateTime(dateStr: string): string {
+  if (!dateStr) return '-';
+  const date = new Date(odooToUtc(dateStr));
+  const formatted = new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Jakarta',
+  }).format(date);
+  return formatted.replace('.', ':') + ' WIB';
 }
 
 export function formatNumberWithSeparator(value: string | number): string {

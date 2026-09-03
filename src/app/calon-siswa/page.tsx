@@ -4,7 +4,16 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
-import { getUser, isCalonOrangtua, getCalonSiswaId } from '@/lib/auth';
+import {
+  getUser,
+  isCalonOrangtua,
+  getCalonSiswaId,
+  getActiveCalonSiswaId,
+  updateActiveCalonSiswa,
+  getCalonSiswaList,
+  updateCalonSiswaList,
+  CalonSiswaSummary,
+} from '@/lib/auth';
 import { formatRupiah } from '@/lib/utils';
 
 const inputStyle: React.CSSProperties = {
@@ -46,7 +55,8 @@ export default function CalonSiswaPage() {
   const [refKota, setRefKota] = useState<Array<{ id: number; name: string }>>([]);
   const [refKecamatan, setRefKecamatan] = useState<Array<{ id: number; name: string }>>([]);
   
-  const calonSiswaId = getCalonSiswaId();
+  const [calonList, setCalonList] = useState<CalonSiswaSummary[]>([]);
+  const [activeCalonId, setActiveCalonId] = useState<number | null>(getActiveCalonSiswaId());
 
   const fetchKota = (propId: number | string) => {
     if (!propId) { setRefKota([]); setRefKecamatan([]); return; }
@@ -69,14 +79,37 @@ export default function CalonSiswaPage() {
       .then(res => res.json())
       .then(d => { if (d.success) setRefPropinsi(d.data); })
       .catch(() => {});
+
+    // Fetch list of calon siswa
+    fetch('/odoo/api/v1/calon-siswa/list', { credentials: 'include' })
+      .then(res => res.json())
+      .then(d => {
+        if (d.success && d.data?.length) {
+          setCalonList(d.data);
+          updateCalonSiswaList(d.data);
+          if (!activeCalonId) {
+            setActiveCalonId(d.data[0].id);
+            updateActiveCalonSiswa(d.data[0].id);
+          }
+        } else {
+          setCalonList(getCalonSiswaList());
+        }
+      })
+      .catch(() => {
+        setCalonList(getCalonSiswaList());
+      });
   }, []);
 
   useEffect(() => {
     const user = getUser();
     if (!user) { router.replace('/login'); return; }
-    if (!isCalonOrangtua() || !calonSiswaId) { router.replace('/'); return; }
+    if (!isCalonOrangtua()) { router.replace('/'); return; }
 
-    fetch(`/odoo/api/v1/calon-siswa/${calonSiswaId}/profil`, { credentials: 'include' })
+    const targetId = activeCalonId || getCalonSiswaId();
+    if (!targetId) return;
+
+    setLoading(true);
+    fetch(`/odoo/api/v1/calon-siswa/${targetId}/profil`, { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data) {
@@ -96,7 +129,7 @@ export default function CalonSiswaPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [calonSiswaId, router]);
+  }, [activeCalonId, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -147,7 +180,10 @@ export default function CalonSiswaPage() {
         editableData[key] = formData[key] ?? '';
       }
 
-      const res = await fetch(`/odoo/api/v1/calon-siswa/${calonSiswaId}/update`, {
+      const targetId = activeCalonId || getCalonSiswaId();
+      if (!targetId) throw new Error('Calon siswa tidak valid');
+
+      const res = await fetch(`/odoo/api/v1/calon-siswa/${targetId}/update`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -161,8 +197,8 @@ export default function CalonSiswaPage() {
         const errMsg = d.error?.message || d.message || (typeof d.error === 'string' ? d.error : 'Unknown error');
         setSavedMessage('Gagal menyimpan: ' + errMsg);
       }
-    } catch {
-      setSavedMessage('Koneksi gagal. Coba lagi.');
+    } catch (e: any) {
+      setSavedMessage('Gagal menyimpan: ' + (e?.message || 'Koneksi gagal.'));
     } finally {
       setSaving(false);
     }
@@ -181,6 +217,58 @@ export default function CalonSiswaPage() {
     <div style={{ minHeight: '100dvh', background: 'var(--color-bg)' }}>
       <PageHeader title="Data Calon Siswa" />
       <main className="main-content" style={{ padding: '16px', paddingBottom: '100px' }}>
+        
+        {/* Multi-Child Segmented Switcher Tab */}
+        {calonList.length > 1 && (
+          <div style={{
+            background: 'var(--color-surface)',
+            borderRadius: '16px',
+            padding: '6px',
+            marginBottom: '16px',
+            display: 'flex',
+            gap: '6px',
+            border: '1px solid var(--color-border)',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+          }}>
+            {calonList.map((c) => {
+              const isActive = c.id === activeCalonId;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    updateActiveCalonSiswa(c.id);
+                    setActiveCalonId(c.id);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '8px 10px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: isActive ? 'var(--color-primary, #174D7F)' : 'transparent',
+                    color: isActive ? '#ffffff' : 'var(--color-text-medium)',
+                    fontWeight: isActive ? 700 : 500,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+                    {c.name}
+                  </span>
+                  <span style={{ fontSize: '10px', opacity: isActive ? 0.9 : 0.7 }}>
+                    {c.jenjang_display || c.jenjang?.toUpperCase() || 'Pendaftaran'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <form onSubmit={handleSave}>
           {/* Informasi Pendaftaran */}
           <div style={sectionStyle}>

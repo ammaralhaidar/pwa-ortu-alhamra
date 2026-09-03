@@ -6,7 +6,15 @@ import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import BottomNav from "@/components/BottomNav";
 import PanduanPembayaran from "@/components/PanduanPembayaran";
-import { getCalonSiswaId, isCalonOrangtua } from "@/lib/auth";
+import {
+  getCalonSiswaId,
+  isCalonOrangtua,
+  getActiveCalonSiswaId,
+  updateActiveCalonSiswa,
+  getCalonSiswaList,
+  updateCalonSiswaList,
+  CalonSiswaSummary,
+} from "@/lib/auth";
 import { formatRupiah, formatDate } from "@/lib/utils";
 
 interface Invoice {
@@ -57,6 +65,9 @@ export default function TagihanCalonPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [activePaymentAlert, setActivePaymentAlert] = useState<any>(null);
 
+  const [calonList, setCalonList] = useState<CalonSiswaSummary[]>([]);
+  const [activeCalonId, setActiveCalonId] = useState<number | null>(getActiveCalonSiswaId());
+
   const [isCicilan, setIsCicilan] = useState(false);
   const [nominal, setNominal] = useState(0);
   const [nominalInput, setNominalInput] = useState("");
@@ -67,22 +78,53 @@ export default function TagihanCalonPage() {
   const [confirmChecked, setConfirmChecked] = useState(false);
 
   useEffect(() => {
-    const calonId = getCalonSiswaId();
-    if (!isCalonOrangtua() || !calonId) {
+    if (!isCalonOrangtua()) {
       router.replace("/");
       return;
     }
-    
-    fetch(`/odoo/api/v1/calon-siswa/${calonId}/tagihan`, {
+
+    // Fetch list of calon siswa
+    fetch('/odoo/api/v1/calon-siswa/list', { credentials: 'include' })
+      .then(res => res.json())
+      .then(d => {
+        if (d.success && d.data?.length) {
+          setCalonList(d.data);
+          updateCalonSiswaList(d.data);
+          if (!activeCalonId) {
+            setActiveCalonId(d.data[0].id);
+            updateActiveCalonSiswa(d.data[0].id);
+          }
+        } else {
+          setCalonList(getCalonSiswaList());
+        }
+      })
+      .catch(() => {
+        setCalonList(getCalonSiswaList());
+      });
+  }, [router]);
+
+  useEffect(() => {
+    const targetId = activeCalonId || getCalonSiswaId();
+    if (!targetId) return;
+
+    setLoading(true);
+    setSelected(new Set());
+    setIsCicilan(false);
+    setNominal(0);
+    setNominalInput("");
+
+    fetch(`/odoo/api/v1/calon-siswa/${targetId}/tagihan`, {
       credentials: "include",
     })
       .then((r) => r.json())
       .then((d) => {
-        if (d.success) setInvoices(d.data);
+        if (d.success) setInvoices(d.data || []);
       })
-      .catch(() => {})
+      .catch(() => {
+        setInvoices([]);
+      })
       .finally(() => setLoading(false));
-  }, [router]);
+  }, [activeCalonId]);
 
   const selectedInvoices = invoices.filter((inv) => selected.has(inv.id));
   const totalSelected = selectedInvoices.reduce(
@@ -218,10 +260,61 @@ export default function TagihanCalonPage() {
         style={{
           paddingLeft: "16px",
           paddingRight: "16px",
-          paddingTop: "24px",
+          paddingTop: "16px",
           paddingBottom: selected.size > 0 ? "160px" : "80px",
         }}
       >
+        {/* Multi-Child Segmented Switcher Tab */}
+        {calonList.length > 1 && (
+          <div style={{
+            background: 'var(--color-surface)',
+            borderRadius: '16px',
+            padding: '6px',
+            marginBottom: '16px',
+            display: 'flex',
+            gap: '6px',
+            border: '1px solid var(--color-border)',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+          }}>
+            {calonList.map((c) => {
+              const isActive = c.id === activeCalonId;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    updateActiveCalonSiswa(c.id);
+                    setActiveCalonId(c.id);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '8px 10px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: isActive ? 'var(--color-primary, #174D7F)' : 'transparent',
+                    color: isActive ? '#ffffff' : 'var(--color-text-medium)',
+                    fontWeight: isActive ? 700 : 500,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+                    {c.name}
+                  </span>
+                  <span style={{ fontSize: '10px', opacity: isActive ? 0.9 : 0.7 }}>
+                    {c.jenjang_display || c.jenjang?.toUpperCase() || 'Pendaftaran'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {loading ? (
           <p style={{ textAlign: "center", color: "var(--color-text-medium)", marginTop: "40px" }}>Memuat tagihan...</p>
         ) : invoices.length === 0 ? (

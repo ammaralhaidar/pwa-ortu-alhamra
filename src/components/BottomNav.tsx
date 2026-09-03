@@ -50,8 +50,10 @@ const navItems = [
 export default function BottomNav() {
   const pathname = usePathname();
   const [hasKeuanganNotif, setHasKeuanganNotif] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (pathname === '/login') return;
     if (isCalonOrangtua()) { setTimeout(() => setHasKeuanganNotif(false), 0); return; }
     const siswaId = getActiveSiswaId();
@@ -71,6 +73,25 @@ export default function BottomNav() {
   }, [pathname]);
 
   if (pathname === '/login') return null;
+
+  if (!mounted) {
+    return (
+      <nav
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          maxWidth: '430px',
+          width: '100%',
+          height: 'var(--bottom-nav-height)',
+          backgroundColor: 'var(--color-surface)',
+          borderTop: '1px solid var(--color-border)',
+          zIndex: 50,
+        }}
+      />
+    );
+  }
 
   const isCalon = isCalonOrangtua();
   const visibleItems = isCalon
