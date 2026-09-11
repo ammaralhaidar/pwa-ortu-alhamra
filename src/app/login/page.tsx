@@ -17,7 +17,14 @@ export default function LoginPage() {
 
   useEffect(() => {
     const stored = localStorage.getItem('ibs_pwa_user');
-    if (stored) router.replace('/');
+    if (stored) {
+      router.replace('/');
+      return;
+    }
+    const lastEmail = localStorage.getItem('ibs_last_login_email');
+    if (lastEmail) {
+      setEmail(lastEmail);
+    }
   }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -50,6 +57,9 @@ export default function LoginPage() {
         setError('Akun ini bukan akun Wali Santri/Calon Wali Santri. Silakan hubungi admin.');
         return;
       }
+
+      // Remember email for future re-login convenience
+      localStorage.setItem('ibs_last_login_email', email);
 
       setUser({
         uid: result.uid,
