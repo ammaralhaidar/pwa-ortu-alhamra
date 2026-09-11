@@ -41,3 +41,8 @@ yarn-error.log*
 next-env.d.ts
 
 /context
+
+# tooling & local artifacts
+.codegraph/
+.commandcode/
+lint-output.txt

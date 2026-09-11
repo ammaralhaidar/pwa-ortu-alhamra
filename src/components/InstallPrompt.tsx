@@ -77,8 +77,10 @@ export default function InstallPrompt() {
       <div style={{
         position: 'fixed',
         bottom: 0,
-        left: 0,
-        right: 0,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '100%',
+        maxWidth: '430px',
         zIndex: 50,
         background: '#fff',
         borderRadius: '24px 24px 0 0',
@@ -86,7 +88,6 @@ export default function InstallPrompt() {
         paddingBottom: 'calc(24px + env(safe-area-inset-bottom))',
         animation: 'slideUp 0.3s ease-out',
         boxShadow: '0 -8px 32px rgba(0,0,0,0.15)',
-        maxWidth: '480px',
         margin: '0 auto',
       }}>
         <div style={{ width: '40px', height: '4px', background: '#CBD5E1', borderRadius: '2px', margin: '0 auto 20px' }} />

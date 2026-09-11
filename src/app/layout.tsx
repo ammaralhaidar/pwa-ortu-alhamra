@@ -8,6 +8,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   themeColor: '#174D7F',
+  colorScheme: 'light',
 };
 
 export const metadata: Metadata = {
@@ -29,14 +30,18 @@ export default function RootLayout({
   return (
     <html lang="id">
       <head>
+        <meta name="color-scheme" content="light" />
+        <meta name="supported-color-schemes" content="light" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body>
-        {children}
-        <InstallPrompt />
-        <NotificationInit />
+        <div className="app-container">
+          {children}
+          <InstallPrompt />
+          <NotificationInit />
+        </div>
       </body>
     </html>
   );

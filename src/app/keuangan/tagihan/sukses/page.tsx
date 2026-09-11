@@ -6,6 +6,7 @@ import { CheckCircle } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import CountdownTimer from '@/components/CountdownTimer';
 import PanduanPembayaran from '@/components/PanduanPembayaran';
+import PanduanBankLainTab from '@/components/PanduanBankLainTab';
 import { formatRupiah, formatFullDateTime } from '@/lib/utils';
 import {
   registerServiceWorker,
@@ -24,6 +25,7 @@ function SuksesContent() {
   const expired = params.get('expired') || '';
   const metode = params.get('metode') || 'bsi';
   const [showDetail, setShowDetail] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -49,10 +51,13 @@ function SuksesContent() {
     })();
   }, []);
 
-  const copyToClipboard = (text: string, label?: string) => {
+  const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text).catch(() => {});
-    alert(`${label || 'Teks'} berhasil disalin!`);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
   };
+
+  const noRekeningBsi = `9005065${kodeBayar}`;
 
   return (
     <>
@@ -107,20 +112,20 @@ function SuksesContent() {
                       {kodeBayar}
                     </p>
                     <button
-                      onClick={() => copyToClipboard(kodeBayar, 'Kode Bayar')}
+                      onClick={() => copyToClipboard(kodeBayar, 'bsi-kode')}
                       style={{
-                        background: 'transparent',
-                        border: '1.5px solid var(--color-primary)',
+                        background: copiedKey === 'bsi-kode' ? '#16A34A' : 'transparent',
+                        border: copiedKey === 'bsi-kode' ? 'none' : '1.5px solid var(--color-primary)',
                         borderRadius: '8px',
                         padding: '6px 12px',
                         cursor: 'pointer',
-                        color: 'var(--color-primary)',
+                        color: copiedKey === 'bsi-kode' ? '#fff' : 'var(--color-primary)',
                         fontSize: '12px',
                         fontWeight: 600,
                         fontFamily: 'Inter, sans-serif',
                       }}
                     >
-                      Salin
+                      {copiedKey === 'bsi-kode' ? '✓ Tersalin!' : 'Salin'}
                     </button>
                   </div>
                 </div>
@@ -189,9 +194,9 @@ function SuksesContent() {
             </div>
           </>
         ) : (
-          /* ======= TAMPILAN SELAIN BSI ======= */
+          /* ======= TAMPILAN SELAIN BSI (NON-BSI REDESIGN) ======= */
           <>
-            {/* Warning Banner */}
+            {/* Warning Banner Top */}
             <div style={{
               background: '#FEF3C7', border: '1.5px solid #FDE68A', borderRadius: '12px',
               padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px',
@@ -201,8 +206,8 @@ function SuksesContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.5" style={{ flexShrink: 0 }}>
                   <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
-                <p style={{ fontSize: '13px', color: '#78350F', margin: 0, fontWeight: 600 }}>
-                  Anda membayar dari <strong>Bank Lain (Selain BSI)</strong>
+                <p style={{ fontSize: '13px', color: '#78350F', margin: 0, fontWeight: 700 }}>
+                  Pembayaran via Transfer Bank Lain (BCA, Mandiri, BNI, BRI, dll)
                 </p>
               </div>
               <div style={{ display: 'flex', gap: '6px', paddingLeft: '30px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -221,70 +226,94 @@ function SuksesContent() {
               </div>
             </div>
 
-            {/* Card Utama */}
+            {/* HERO ACTION BOX NON-BSI */}
             <div style={{
-              background: 'var(--color-surface)', borderRadius: '20px', padding: '20px',
-              border: '2px solid #D97706', marginBottom: '16px',
-              boxShadow: '0 4px 16px rgba(217,119,6,0.12)',
+              background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)', borderRadius: '20px', padding: '20px',
+              border: '2px solid #FCD34D', marginBottom: '16px',
+              boxShadow: '0 4px 20px rgba(217,119,6,0.15)',
             }}>
-              {/* Rekening Tujuan */}
-              <div style={{ background: '#FFFBEB', borderRadius: '12px', padding: '12px 14px', marginBottom: '12px' }}>
-                <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '0 0 4px' }}>Rekening Tujuan (BSI)</p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <p style={{ fontSize: '18px', fontWeight: 800, color: '#92400E', letterSpacing: '1px', margin: 0 }}>
-                    9005065{kodeBayar}
+              {/* Rekening Tujuan BSI */}
+              <div style={{ marginBottom: '14px', paddingBottom: '14px', borderBottom: '1px dashed #FCD34D' }}>
+                <p style={{ fontSize: '11px', color: '#92400E', margin: '0 0 4px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  1. Nomor Rekening Tujuan (BSI)
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                  <p style={{ fontSize: '18px', fontWeight: 800, color: '#78350F', letterSpacing: '0.5px', margin: 0, wordBreak: 'break-all' }}>
+                    {noRekeningBsi}
                   </p>
-                  <button onClick={() => copyToClipboard(`9005065${kodeBayar}`, 'No. Rekening')} style={{
-                    background: 'transparent', border: '1.5px solid #D97706',
-                    borderRadius: '8px', padding: '6px 12px', cursor: 'pointer',
-                    color: '#D97706', fontSize: '12px', fontWeight: 600, fontFamily: 'Inter, sans-serif',
-                  }}>Salin</button>
+                  <button
+                    onClick={() => copyToClipboard(noRekeningBsi, 'lain-rek')}
+                    style={{
+                      background: copiedKey === 'lain-rek' ? '#16A34A' : '#D97706',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '8px 14px',
+                      cursor: 'pointer',
+                      color: '#fff',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      fontFamily: 'Inter, sans-serif',
+                      transition: 'all 0.2s ease',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {copiedKey === 'lain-rek' ? '✓ Tersalin!' : 'Salin Rekening'}
+                  </button>
                 </div>
               </div>
 
-              {/* Nominal Harus Persis */}
-              <div style={{
-                background: '#FEF2F2', borderRadius: '12px', padding: '14px',
-                border: '1.5px solid #FECACA', marginBottom: '12px',
-              }}>
-                <p style={{ fontSize: '11px', color: '#991B1B', margin: '0 0 4px', fontWeight: 600 }}>
-                  💰 NOMINAL YANG HARUS DITRANSFER
+              {/* Nominal Transfer Pas */}
+              <div style={{ marginBottom: '16px' }}>
+                <p style={{ fontSize: '11px', color: '#991B1B', margin: '0 0 4px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  2. Nominal Transfer (Harus Sama Persis)
                 </p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <p style={{ fontSize: '24px', fontWeight: 800, color: 'var(--color-danger)', letterSpacing: '0.5px', margin: 0 }} className="rupiah">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                  <p style={{ fontSize: '24px', fontWeight: 800, color: '#991B1B', letterSpacing: '0.5px', margin: 0 }} className="rupiah">
                     {formatRupiah(total)}
                   </p>
-                  <button onClick={() => copyToClipboard(String(total), 'Nominal')} style={{
-                    background: 'var(--color-danger)', border: 'none',
-                    borderRadius: '8px', padding: '8px 14px', cursor: 'pointer',
-                    color: '#fff', fontSize: '12px', fontWeight: 700, fontFamily: 'Inter, sans-serif',
-                  }}>Salin</button>
+                  <button
+                    onClick={() => copyToClipboard(String(total), 'lain-total')}
+                    style={{
+                      background: copiedKey === 'lain-total' ? '#16A34A' : '#DC2626',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '8px 14px',
+                      cursor: 'pointer',
+                      color: '#fff',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      fontFamily: 'Inter, sans-serif',
+                      transition: 'all 0.2s ease',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {copiedKey === 'lain-total' ? '✓ Tersalin!' : 'Salin Nominal'}
+                  </button>
                 </div>
-                <p style={{ fontSize: '12px', color: '#991B1B', margin: '8px 0 0', lineHeight: 1.5 }}>
-                  ⚠️ <strong>HARUS SAMA PERSIS!</strong> Sudah termasuk biaya admin {formatRupiah(admin)}.
-                  Jika nominal tidak sesuai, pembayaran akan ditolak.
+                <p style={{ fontSize: '11px', color: '#991B1B', margin: '6px 0 0', opacity: 0.9 }}>
+                  *Sudah termasuk biaya admin {formatRupiah(admin)}.
                 </p>
               </div>
 
               {/* Countdown + Batas Waktu */}
-              <div style={{ textAlign: 'center', borderTop: '1px solid var(--color-border)', paddingTop: '12px', marginBottom: '8px' }}>
-                <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '0 0 8px' }}>Sisa Waktu Pembayaran</p>
+              <div style={{ textAlign: 'center', borderTop: '1px dashed #FCD34D', paddingTop: '14px', marginBottom: '8px' }}>
+                <p style={{ fontSize: '11px', color: '#92400E', margin: '0 0 8px', fontWeight: 600 }}>Sisa Waktu Pembayaran</p>
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
                   {expired ? <CountdownTimer targetDateStr={expired} /> : <p style={{ color: 'var(--color-text-medium)' }}>-</p>}
                 </div>
               </div>
               {expired && (
-                <p style={{ textAlign: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-high)', marginBottom: '12px', background: '#F8FAFC', padding: '8px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                <p style={{ textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#78350F', marginBottom: '12px', background: '#FFFBEB', padding: '6px', borderRadius: '8px', border: '1px solid #FDE68A' }}>
                   Batas Waktu: {formatFullDateTime(expired)}
                 </p>
               )}
 
               {/* Tombol Detail Transaksi */}
-              <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
+              <div style={{ borderTop: '1px dashed #FCD34D', paddingTop: '12px' }}>
                 <button onClick={() => setShowDetail(true)} style={{
-                  width: '100%', background: 'transparent', border: '1.5px solid var(--color-border)',
+                  width: '100%', background: '#fff', border: '1.5px solid #FCD34D',
                   borderRadius: '10px', padding: '10px', cursor: 'pointer',
-                  color: 'var(--color-text-medium)', fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif',
+                  color: '#78350F', fontSize: '13px', fontWeight: 700, fontFamily: 'Inter, sans-serif',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                 }}>
                   Lihat Detail Transaksi
@@ -293,26 +322,51 @@ function SuksesContent() {
               </div>
             </div>
 
-            {/* Panduan Transfer Antar Bank Inline */}
-            <div style={{
-              background: 'var(--color-surface)', borderRadius: '16px', padding: '20px',
-              border: '1px solid var(--color-border)', marginBottom: '16px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-            }}>
-              <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+            {/* CARD 3 ATURAN EMAS UNTUK BANK LAIN */}
+            <div
+              style={{
+                background: '#F8FAFC',
+                border: '1px solid var(--color-border)',
+                borderRadius: '18px',
+                padding: '16px',
+                marginBottom: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+              }}
+            >
+              <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text-high)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.5">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
-                Cara Bayar via Transfer Antar Bank
+                3 Aturan Penting Pembayaran Non-BSI
               </h4>
-              <ol style={{ fontSize: '13px', color: 'var(--color-text-high)', paddingLeft: '20px', lineHeight: 1.7, margin: 0 }}>
-                <li>Buka M-Banking Anda (Livin, BCA Mobile, BRImo, dll).</li>
-                <li>Pilih menu <strong>Transfer Antar Bank</strong>.</li>
-                <li>Pilih bank tujuan <strong>BSI (Kode 451)</strong>.</li>
-                <li>Masukkan rekening tujuan: <strong>9005065{kodeBayar}</strong>.</li>
-                <li>Masukkan nominal: <strong>{formatRupiah(total)}</strong> — <strong style={{ color: 'var(--color-danger)' }}>HARUS SAMA PERSIS!</strong></li>
-                <li>Pastikan data benar, selesaikan transaksi.</li>
-              </ol>
+
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', background: '#FEF2F2', padding: '10px 12px', borderRadius: '10px', border: '1px solid #FECACA' }}>
+                <span style={{ fontSize: '16px', flexShrink: 0 }}>⚡</span>
+                <div style={{ fontSize: '12px', color: '#7F1D1D', lineHeight: 1.4 }}>
+                  <strong>1. WAJIB PILIH RTO (Real-Time Online):</strong> Saat transfer di m-Banking, wajib pilih metode <strong>RTO</strong>. <u>JANGAN pilih BI-Fast</u>.
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', background: '#FFFBEB', padding: '10px 12px', borderRadius: '10px', border: '1px solid #FDE68A' }}>
+                <span style={{ fontSize: '16px', flexShrink: 0 }}>🔄</span>
+                <div style={{ fontSize: '12px', color: '#78350F', lineHeight: 1.4 }}>
+                  <strong>2. HAPUS REKENING FAVORIT TERSIMPAN:</strong> Nama rekening BSI berubah dinamis. <u>Hapus favorit lama di m-Banking</u> dan input sebagai Rekening Baru.
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', background: '#FEF2F2', padding: '10px 12px', borderRadius: '10px', border: '1px solid #FECACA' }}>
+                <span style={{ fontSize: '16px', flexShrink: 0 }}>🎯</span>
+                <div style={{ fontSize: '12px', color: '#7F1D1D', lineHeight: 1.4 }}>
+                  <strong>3. NOMINAL HARUS SAMA PERSIS:</strong> Masukkan nominal transfer persis hingga rupiah terakhir dengan <strong>{formatRupiah(total)}</strong>.
+                </div>
+              </div>
+            </div>
+
+            {/* TAB PANDUAN BANK LAIN INTERAKTIF */}
+            <div style={{ marginBottom: '16px' }}>
+              <PanduanBankLainTab kodeBayar={kodeBayar} total={total} />
             </div>
           </>
         )}

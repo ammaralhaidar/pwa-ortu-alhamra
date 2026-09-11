@@ -14,6 +14,7 @@ interface Invoice {
   nama_tagihan?: string;
   komponen_id?: [number, string] | false;
   invoice_date: string;
+  invoice_date_due?: string | null;
   amount_total_signed: number;
   amount_residual_signed: number;
   payment_state: string;
@@ -184,10 +185,22 @@ export default function TagihanPage() {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          params: { move_ids: Array.from(selected), nominal: displayNominal },
+          params: { move_ids: Array.from(selected), nominal: displayNominal, metode: paymentMethod === 'lainnya' ? 'lain' : 'bsi' },
         }),
       });
-      const data = await res.json();
+      if (res.status === 401) {
+        alert("Sesi login Anda telah berakhir. Silakan login kembali.");
+        router.push("/login");
+        return;
+      }
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        alert("Sesi login Anda telah berakhir. Silakan login kembali.");
+        router.push("/login");
+        return;
+      }
       if (data.success) {
         router.push(
           "/keuangan/tagihan/sukses?" +
@@ -204,7 +217,7 @@ export default function TagihanPage() {
         alert(data.error || "Gagal membuat kode bayar.");
       }
     } catch {
-      alert("Terjadi kesalahan koneksi.");
+      alert("Terjadi kesalahan koneksi. Silakan periksa jaringan internet Anda.");
     } finally {
       setSubmitting(false);
       setShowPreview(false);
@@ -405,9 +418,9 @@ export default function TagihanPage() {
                         Sebagian dibayar pada {formatDate(inv.paid_on)}
                       </p>
                     )}
-                    {inv.payment_state !== 'paid' && inv.invoice_date && (
+                    {inv.payment_state !== 'paid' && (inv.invoice_date_due || inv.invoice_date) && (
                       <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '4px 0 0' }}>
-                        Jatuh tempo: {formatDate(inv.invoice_date)}
+                        Jatuh tempo: {formatDate(inv.invoice_date_due || inv.invoice_date)}
                       </p>
                     )}
                   </div>
@@ -477,8 +490,10 @@ export default function TagihanPage() {
           style={{
             position: "fixed",
             bottom: "var(--bottom-nav-height)",
-            left: 0,
-            right: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "100%",
+            maxWidth: "430px",
             zIndex: 45,
             background: "var(--color-surface)",
             borderTop: "1px solid var(--color-border)",
@@ -963,12 +978,13 @@ export default function TagihanPage() {
                         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
                         <line x1="12" y1="16" x2="12.01" y2="16"/>
                       </svg>
-                      Perhatian Penting
+                      Perhatian Penting Transfer Bank Lain
                     </h4>
-                    <p style={{ fontSize: '13px', color: '#991B1B', lineHeight: 1.6, margin: '0 0 10px' }}>
-                      Nominal yang Anda transfer nanti <strong>harus sama persis</strong> dengan jumlah tagihan yang tertera.
-                      Jika tidak sesuai, pembayaran akan <strong>ditolak</strong> oleh sistem Smartbilling BSI.
-                    </p>
+                    <ul style={{ fontSize: '12px', color: '#991B1B', lineHeight: 1.6, margin: '0 0 12px', paddingLeft: '18px' }}>
+                      <li style={{ marginBottom: '4px' }}><strong>1. Wajib Layanan Real-Time Online (RTO):</strong> Gunakan RTO di m-Banking. <u>JANGAN gunakan BI-Fast</u>.</li>
+                      <li style={{ marginBottom: '4px' }}><strong>2. Hapus Rekening Favorit Lama:</strong> Karena nama rekening BSI selalu berubah dinamis, <u>hapus nomor rekening lama dari daftar favorit m-Banking Anda</u>, lalu input ulang sebagai Rekening Baru.</li>
+                      <li><strong>3. Nominal Tepat:</strong> Transfer harus sama persis hingga digit terakhir.</li>
+                    </ul>
                     <div style={{
                       background: '#fff', borderRadius: '10px', padding: '12px', textAlign: 'center',
                       border: '1px solid #FECACA', marginBottom: '12px',
@@ -1005,7 +1021,7 @@ export default function TagihanPage() {
                         )}
                       </div>
                       <span style={{ fontSize: '13px', color: '#991B1B', lineHeight: 1.5 }}>
-                        Saya mengerti dan akan mentransfer nominal yang <strong>sama persis</strong>.
+                        Saya mengerti 3 aturan di atas dan akan mentransfer via <strong>RTO</strong> dengan nominal <strong>sama persis</strong>.
                       </span>
                     </button>
                   </div>

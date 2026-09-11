@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
@@ -8,8 +8,10 @@ import { getUser, logout, isCalonOrangtua } from '@/lib/auth';
 
 export default function ProfilPage() {
   const router = useRouter();
-  const user = getUser();
-  const isCalon = isCalonOrangtua();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const user = mounted ? getUser() : null;
+  const isCalon = mounted ? isCalonOrangtua() : false;
   const [showPassForm, setShowPassForm] = useState(false);
   const [oldPass, setOldPass] = useState('');
   const [newPass, setNewPass] = useState('');
@@ -31,7 +33,7 @@ export default function ProfilPage() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ old_password: oldPass, new_password: newPass }),
+        body: JSON.stringify({ params: { old_password: oldPass, new_password: newPass } }),
       });
       const data = await res.json();
       if (data.result?.code === 200) {

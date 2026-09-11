@@ -1,3 +1,19 @@
+export interface CalonSiswaSummary {
+  id: number;
+  name: string;
+  nis: string;
+  jenjang?: string;
+  jenjang_display?: string;
+  biaya_id?: number | false;
+  biaya_name?: string;
+  tahunajaran_name?: string;
+  state: string;
+  is_data_complete?: boolean;
+  has_tagihan?: boolean;
+  payment_state?: string | null;
+  progress_pct?: number;
+}
+
 export interface UserData {
   uid: number;
   partner_id: number;
@@ -5,9 +21,11 @@ export interface UserData {
   username: string;
   orangtua_id: number | false;
   siswa_id: number | false;
-  active_siswa_id?: number; // Currently selected student (multi-anak)
+  active_siswa_id?: number; // Currently selected student (multi-anak santri aktif)
   is_calon_orangtua?: boolean;
   calon_siswa_id?: number | false;
+  active_calon_siswa_id?: number; // Currently selected calon siswa (multi-anak calon)
+  calon_siswa_list?: CalonSiswaSummary[];
   avatar_128?: string | false;
 }
 
@@ -43,6 +61,35 @@ export function getActiveSiswaId(): number | null {
   return null;
 }
 
+export function updateActiveCalonSiswa(calonId: number): void {
+  const user = getUser();
+  if (user) {
+    setUser({ ...user, active_calon_siswa_id: calonId, calon_siswa_id: calonId });
+  }
+}
+
+export function getActiveCalonSiswaId(): number | null {
+  const user = getUser();
+  if (!user) return null;
+  if (user.active_calon_siswa_id) return user.active_calon_siswa_id;
+  if (typeof user.calon_siswa_id === 'number') return user.calon_siswa_id;
+  if (user.calon_siswa_list && user.calon_siswa_list.length > 0) return user.calon_siswa_list[0].id;
+  return null;
+}
+
+export function getCalonSiswaList(): CalonSiswaSummary[] {
+  const user = getUser();
+  return user?.calon_siswa_list || [];
+}
+
+export function updateCalonSiswaList(list: CalonSiswaSummary[]): void {
+  const user = getUser();
+  if (user) {
+    const activeId = user.active_calon_siswa_id || (list.length > 0 ? list[0].id : undefined);
+    setUser({ ...user, calon_siswa_list: list, active_calon_siswa_id: activeId, calon_siswa_id: activeId || user.calon_siswa_id });
+  }
+}
+
 export function isLoggedIn(): boolean {
   return getUser() !== null;
 }
@@ -71,6 +118,6 @@ export function isCalonOrangtua(): boolean {
 }
 
 export function getCalonSiswaId(): number | false {
-  const user = getUser();
-  return user?.calon_siswa_id || false;
+  const id = getActiveCalonSiswaId();
+  return id !== null ? id : false;
 }

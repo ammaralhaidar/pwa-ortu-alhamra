@@ -4,7 +4,16 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
-import { getUser, isCalonOrangtua, getCalonSiswaId } from '@/lib/auth';
+import {
+  getUser,
+  isCalonOrangtua,
+  getCalonSiswaId,
+  getActiveCalonSiswaId,
+  updateActiveCalonSiswa,
+  getCalonSiswaList,
+  updateCalonSiswaList,
+  CalonSiswaSummary,
+} from '@/lib/auth';
 import { formatRupiah } from '@/lib/utils';
 
 const inputStyle: React.CSSProperties = {
@@ -42,15 +51,65 @@ export default function CalonSiswaPage() {
   const [savedMessage, setSavedMessage] = useState('');
   const [formData, setFormData] = useState<Record<string, string | number>>({});
   const [readOnlyData, setReadOnlyData] = useState<Record<string, string | number>>({});
+  const [refPropinsi, setRefPropinsi] = useState<Array<{ id: number; name: string }>>([]);
+  const [refKota, setRefKota] = useState<Array<{ id: number; name: string }>>([]);
+  const [refKecamatan, setRefKecamatan] = useState<Array<{ id: number; name: string }>>([]);
   
-  const calonSiswaId = getCalonSiswaId();
+  const [calonList, setCalonList] = useState<CalonSiswaSummary[]>([]);
+  const [activeCalonId, setActiveCalonId] = useState<number | null>(getActiveCalonSiswaId());
+
+  const fetchKota = (propId: number | string) => {
+    if (!propId) { setRefKota([]); setRefKecamatan([]); return; }
+    fetch(`/odoo/api/v1/referensi/kota?propinsi_id=${propId}`, { credentials: 'include' })
+      .then(res => res.json())
+      .then(d => { if (d.success) setRefKota(d.data); })
+      .catch(() => {});
+  };
+
+  const fetchKecamatan = (kotaId: number | string) => {
+    if (!kotaId) { setRefKecamatan([]); return; }
+    fetch(`/odoo/api/v1/referensi/kecamatan?kota_id=${kotaId}`, { credentials: 'include' })
+      .then(res => res.json())
+      .then(d => { if (d.success) setRefKecamatan(d.data); })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    fetch('/odoo/api/v1/referensi/propinsi', { credentials: 'include' })
+      .then(res => res.json())
+      .then(d => { if (d.success) setRefPropinsi(d.data); })
+      .catch(() => {});
+
+    // Fetch list of calon siswa
+    fetch('/odoo/api/v1/calon-siswa/list', { credentials: 'include' })
+      .then(res => res.json())
+      .then(d => {
+        if (d.success && d.data?.length) {
+          setCalonList(d.data);
+          updateCalonSiswaList(d.data);
+          if (!activeCalonId) {
+            setActiveCalonId(d.data[0].id);
+            updateActiveCalonSiswa(d.data[0].id);
+          }
+        } else {
+          setCalonList(getCalonSiswaList());
+        }
+      })
+      .catch(() => {
+        setCalonList(getCalonSiswaList());
+      });
+  }, []);
 
   useEffect(() => {
     const user = getUser();
     if (!user) { router.replace('/login'); return; }
-    if (!isCalonOrangtua() || !calonSiswaId) { router.replace('/'); return; }
+    if (!isCalonOrangtua()) { router.replace('/'); return; }
 
-    fetch(`/odoo/api/v1/calon-siswa/${calonSiswaId}/profil`, { credentials: 'include' })
+    const targetId = activeCalonId || getCalonSiswaId();
+    if (!targetId) return;
+
+    setLoading(true);
+    fetch(`/odoo/api/v1/calon-siswa/${targetId}/profil`, { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data) {
@@ -64,15 +123,37 @@ export default function CalonSiswaPage() {
             email_orangtua: d.email_orangtua,
           });
           setFormData({ ...d });
+          if (d.propinsi_id) fetchKota(d.propinsi_id);
+          if (d.kota_id) fetchKecamatan(d.kota_id);
         }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [calonSiswaId, router]);
+  }, [activeCalonId, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePropinsiChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value ? parseInt(e.target.value, 10) : '';
+    setFormData(prev => ({ ...prev, propinsi_id: val, kota_id: '', kecamatan_id: '' }));
+    setRefKota([]);
+    setRefKecamatan([]);
+    if (val) fetchKota(val);
+  };
+
+  const handleKotaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value ? parseInt(e.target.value, 10) : '';
+    setFormData(prev => ({ ...prev, kota_id: val, kecamatan_id: '' }));
+    setRefKecamatan([]);
+    if (val) fetchKecamatan(val);
+  };
+
+  const handleKecamatanChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value ? parseInt(e.target.value, 10) : '';
+    setFormData(prev => ({ ...prev, kecamatan_id: val }));
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -85,6 +166,7 @@ export default function CalonSiswaPage() {
         'name', 'nisn', 'panggilan', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir',
         'gol_darah', 'agama', 'kewarganegaraan', 'nik', 'anak_ke', 'jml_saudara_kandung',
         'bahasa', 'cita_cita', 'rt_rw', 'street', 'street2', 'city', 'zip',
+        'propinsi_id', 'kota_id', 'kecamatan_id',
         'asal_sekolah', 'kepsek_sekolah_asal', 'status_sekolah_asal', 'telp_asal_sek',
         'alamat_asal_sek', 'prestasi_sebelum',
         'nama_ayah', 'hp_ayah', 'ayah_tmp_lahir', 'ayah_tgl_lahir', 'ayah_warganegara',
@@ -98,7 +180,10 @@ export default function CalonSiswaPage() {
         editableData[key] = formData[key] ?? '';
       }
 
-      const res = await fetch(`/odoo/api/v1/calon-siswa/${calonSiswaId}/update`, {
+      const targetId = activeCalonId || getCalonSiswaId();
+      if (!targetId) throw new Error('Calon siswa tidak valid');
+
+      const res = await fetch(`/odoo/api/v1/calon-siswa/${targetId}/update`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -109,10 +194,11 @@ export default function CalonSiswaPage() {
         setSavedMessage('Data berhasil disimpan');
         setTimeout(() => setSavedMessage(''), 3000);
       } else {
-        setSavedMessage('Gagal menyimpan: ' + (d.error?.message || 'Unknown error'));
+        const errMsg = d.error?.message || d.message || (typeof d.error === 'string' ? d.error : 'Unknown error');
+        setSavedMessage('Gagal menyimpan: ' + errMsg);
       }
-    } catch {
-      setSavedMessage('Koneksi gagal. Coba lagi.');
+    } catch (e: any) {
+      setSavedMessage('Gagal menyimpan: ' + (e?.message || 'Koneksi gagal.'));
     } finally {
       setSaving(false);
     }
@@ -131,6 +217,58 @@ export default function CalonSiswaPage() {
     <div style={{ minHeight: '100dvh', background: 'var(--color-bg)' }}>
       <PageHeader title="Data Calon Siswa" />
       <main className="main-content" style={{ padding: '16px', paddingBottom: '100px' }}>
+        
+        {/* Multi-Child Segmented Switcher Tab */}
+        {calonList.length > 1 && (
+          <div style={{
+            background: 'var(--color-surface)',
+            borderRadius: '16px',
+            padding: '6px',
+            marginBottom: '16px',
+            display: 'flex',
+            gap: '6px',
+            border: '1px solid var(--color-border)',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+          }}>
+            {calonList.map((c) => {
+              const isActive = c.id === activeCalonId;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    updateActiveCalonSiswa(c.id);
+                    setActiveCalonId(c.id);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '8px 10px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: isActive ? 'var(--color-primary, #174D7F)' : 'transparent',
+                    color: isActive ? '#ffffff' : 'var(--color-text-medium)',
+                    fontWeight: isActive ? 700 : 500,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+                    {c.name}
+                  </span>
+                  <span style={{ fontSize: '10px', opacity: isActive ? 0.9 : 0.7 }}>
+                    {c.jenjang_display || c.jenjang?.toUpperCase() || 'Pendaftaran'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <form onSubmit={handleSave}>
           {/* Informasi Pendaftaran */}
           <div style={sectionStyle}>
@@ -280,21 +418,71 @@ export default function CalonSiswaPage() {
                   <input name="rt_rw" value={formData.rt_rw || ''} onChange={handleChange} style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>Kota/Kabupaten</label>
-                  <input name="city" value={formData.city || ''} onChange={handleChange} style={inputStyle} required />
-                </div>
-                <div>
                   <label style={labelStyle}>Kode Pos</label>
                   <input name="zip" value={formData.zip || ''} onChange={handleChange} style={inputStyle} />
                 </div>
               </div>
               <div>
-                <label style={labelStyle}>Provinsi (Sistem)</label>
-                <input readOnly value={formData.propinsi_name || '-'} style={{ ...inputStyle, background: '#F1F5F9' }} />
+                <label style={labelStyle}>Provinsi</label>
+                <select
+                  name="propinsi_id"
+                  value={formData.propinsi_id || ''}
+                  onChange={handlePropinsiChange}
+                  style={inputStyle}
+                >
+                  <option value="">-- Pilih Provinsi --</option>
+                  {refPropinsi.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
-                <label style={labelStyle}>Kecamatan (Sistem)</label>
-                <input readOnly value={formData.kecamatan_name || '-'} style={{ ...inputStyle, background: '#F1F5F9' }} />
+                <label style={labelStyle}>Kota/Kabupaten</label>
+                <select
+                  name="kota_id"
+                  value={formData.kota_id || ''}
+                  onChange={handleKotaChange}
+                  disabled={!formData.propinsi_id}
+                  style={{
+                    ...inputStyle,
+                    background: !formData.propinsi_id ? '#F1F5F9' : '#fff',
+                    cursor: !formData.propinsi_id ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  <option value="">
+                    {!formData.propinsi_id ? '-- Pilih Provinsi Terlebih Dahulu --' : '-- Pilih Kota/Kabupaten --'}
+                  </option>
+                  {refKota.map((k) => (
+                    <option key={k.id} value={k.id}>
+                      {k.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Kecamatan</label>
+                <select
+                  name="kecamatan_id"
+                  value={formData.kecamatan_id || ''}
+                  onChange={handleKecamatanChange}
+                  disabled={!formData.kota_id}
+                  style={{
+                    ...inputStyle,
+                    background: !formData.kota_id ? '#F1F5F9' : '#fff',
+                    cursor: !formData.kota_id ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  <option value="">
+                    {!formData.kota_id ? '-- Pilih Kota/Kabupaten Terlebih Dahulu --' : '-- Pilih Kecamatan --'}
+                  </option>
+                  {refKecamatan.map((kc) => (
+                    <option key={kc.id} value={kc.id}>
+                      {kc.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
