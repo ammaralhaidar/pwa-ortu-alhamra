@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getActiveSiswaId, isCalonOrangtua } from '@/lib/auth';
+import { apiFetch } from '@/lib/api';
 
 const navItems = [
   {
@@ -57,11 +58,10 @@ export default function BottomNav() {
     if (pathname === '/login') return;
     if (isCalonOrangtua()) { setTimeout(() => setHasKeuanganNotif(false), 0); return; }
     const siswaId = getActiveSiswaId();
-    const url = siswaId ? `/odoo/api/v1/dashboard/keuangan?siswa_id=${siswaId}` : '/odoo/api/v1/dashboard/keuangan';
-    fetch(url, { credentials: 'include' })
-      .then(res => res.json())
+    const path = siswaId ? `/api/v1/dashboard/keuangan?siswa_id=${siswaId}` : '/api/v1/dashboard/keuangan';
+    apiFetch<{ success: boolean; data: { total_tagihan_aktif: number; jumlah_kode_bayar_aktif: number } }>(path)
       .then(d => {
-        if (d.success && d.data) {
+        if (d?.success && d.data) {
           if (d.data.total_tagihan_aktif > 0 || d.data.jumlah_kode_bayar_aktif > 0) {
             setHasKeuanganNotif(true);
           } else {

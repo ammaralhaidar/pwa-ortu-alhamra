@@ -27,6 +27,7 @@ import {
   markPengumumanAsRead,
   isPengumumanRead,
 } from '@/lib/pengumuman';
+import { apiFetch } from '@/lib/api';
 
 interface DashboardData {
   siswa_info: { id: number; name: string };
@@ -82,9 +83,8 @@ export default function DashboardPage() {
   async function fetchCalonSiswaList() {
     setLoading(true);
     try {
-      const res = await fetch('/odoo/api/v1/calon-siswa/list', { credentials: 'include' });
-      const data = await res.json();
-      if (data.success && data.data?.length) {
+      const data = await apiFetch<{ success: boolean; data: CalonSiswaSummary[] }>('/api/v1/calon-siswa/list');
+      if (data?.success && data?.data?.length) {
         setCalonList(data.data);
         updateCalonSiswaList(data.data);
         const currActive = getActiveCalonSiswaId() || data.data[0].id;
@@ -119,9 +119,8 @@ export default function DashboardPage() {
 
   async function fetchSiswaList() {
     try {
-      const res = await fetch('/odoo/api/v1/siswa/list', { credentials: 'include' });
-      const data = await res.json();
-      if (data.success && data.data?.length) {
+      const data = await apiFetch<{ success: boolean; data: SiswaOption[] }>('/api/v1/siswa/list');
+      if (data?.success && data?.data?.length) {
         setSiswas(data.data);
         const activeId = getActiveSiswaId() || data.data[0].id;
         setActiveSiswaId(activeId);
@@ -138,13 +137,12 @@ export default function DashboardPage() {
   const fetchDashboard = async (siswaId: number | null) => {
     setLoading(true);
     try {
-      const url = siswaId
-        ? `/odoo/api/v1/dashboard/overview?siswa_id=${siswaId}`
-        : `/odoo/api/v1/dashboard/overview`;
-      const res = await fetch(url, { credentials: 'include' });
-      const data = await res.json();
-      if (data.success) setDashboard(data.data);
-    } catch { /* ignore */ }
+      const path = siswaId
+        ? `/api/v1/dashboard/overview?siswa_id=${siswaId}`
+        : `/api/v1/dashboard/overview`;
+      const data = await apiFetch<{ success: boolean; data: DashboardData }>(path);
+      if (data?.success) setDashboard(data.data);
+    } catch { /* session expired or error handled */ }
     finally { setLoading(false); }
   };
 

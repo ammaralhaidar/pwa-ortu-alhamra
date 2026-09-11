@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import InstallPrompt from '@/components/InstallPrompt';
 import NotificationInit from '@/components/NotificationInit';
+import SessionExpiredModal from '@/components/SessionExpiredModal';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -41,6 +42,7 @@ export default function RootLayout({
           {children}
           <InstallPrompt />
           <NotificationInit />
+          <SessionExpiredModal />
         </div>
       </body>
     </html>
