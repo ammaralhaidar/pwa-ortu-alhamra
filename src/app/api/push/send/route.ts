@@ -1,19 +1,33 @@
 import { NextResponse } from 'next/server'
 import webpush from 'web-push'
 
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || ''
-const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@ibs.alhamra.sch.id'
-const apiSecret = process.env.PUSH_API_SECRET || ''
+function initVapid() {
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || ''
+  const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@ibs.alhamra.sch.id'
 
-webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey)
+  if (vapidPublicKey && vapidPrivateKey) {
+    try {
+      webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey)
+      return true
+    } catch (e) {
+      console.warn('VAPID setup warning:', e)
+    }
+  }
+  return false
+}
 
 export async function POST(request: Request) {
+  const apiSecret = process.env.PUSH_API_SECRET || ''
   if (apiSecret) {
     const authHeader = request.headers.get('authorization') || ''
     if (authHeader !== `Bearer ${apiSecret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+  }
+
+  if (!initVapid()) {
+    return NextResponse.json({ error: 'VAPID keys not properly configured' }, { status: 500 })
   }
 
   try {

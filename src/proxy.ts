@@ -4,11 +4,12 @@ import type { NextRequest } from 'next/server';
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow login page and static assets
+  // Allow login page, static assets, API, and Odoo proxy rewrites
   if (
     pathname.startsWith('/login') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
+    pathname.startsWith('/odoo') ||
     pathname.includes('.')
   ) {
     return NextResponse.next();

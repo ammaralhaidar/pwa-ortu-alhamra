@@ -6,7 +6,7 @@ export interface PengumumanItem {
   title: string;
   kategori: 'umum' | 'kesantrian' | 'akademik' | 'keuangan' | 'admisi';
   kategori_label: string;
-  target_audience: 'semua' | 'ortu' | 'calon_ortu' | 'pegawai';
+  target_audience: 'semua' | 'ortu' | 'calon_ortu';
   target_audience_label: string;
   tanggal_buat: string | null;
   tanggal: string | null;

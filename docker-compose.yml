@@ -1,0 +1,33 @@
+services:
+  pwa-ortu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_ODOO_URL: http://15.235.143.114:10016
+        NEXT_PUBLIC_ODOO_DB: db_alhamra_production
+    container_name: pwa_ortu_alhamra
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - NEXT_PUBLIC_ODOO_URL=http://15.235.143.114:10016
+      - NEXT_PUBLIC_ODOO_DB=db_alhamra_production
+      - NEXT_PUBLIC_VAPID_PUBLIC_KEY=BORgBN6QgJOLfw9xMFq00qTshfnTanhteBuLH5obMU8SeoSkhHSSc6O6jJjnru-UjcZHhphqP5uxC_i6l--maXs
+      - VAPID_PRIVATE_KEY=nD4z-Kx6zEAUtgVX4smGQKsYSqX-NK0ZIxzonAwEpNk
+      - VAPID_SUBJECT=mailto:odoo@ibsalhamra.sch.id
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+        reservations:
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
