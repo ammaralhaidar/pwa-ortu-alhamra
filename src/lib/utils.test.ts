@@ -1,4 +1,4 @@
-import { formatRupiah, odooToUtc, formatFullDateTime } from './utils';
+import { formatRupiah, odooToUtc, formatFullDateTime, formatDate, formatShortDate } from './utils';
 
 describe('Utility Functions', () => {
   describe('formatRupiah', () => {
@@ -32,13 +32,47 @@ describe('Utility Functions', () => {
       const input = '2026-05-19T10:15:39Z';
       expect(odooToUtc(input)).toBe(input);
     });
+    it('converts Odoo date-only string (YYYY-MM-DD) to ISO UTC string with T00:00:00Z', () => {
+      const input = '2026-09-02';
+      const expected = '2026-09-02T00:00:00Z';
+      expect(odooToUtc(input)).toBe(expected);
+    });
+
+    it('returns empty string if input is boolean false (Odoo empty field)', () => {
+      expect(odooToUtc(false as any)).toBe('');
+    });
+  });
+
+  describe('formatDate', () => {
+    it('formats date-only string correctly without throwing RangeError', () => {
+      const result = formatDate('2026-09-02');
+      expect(result).toBe('2 September 2026');
+    });
+
+    it('handles falsy or invalid values gracefully', () => {
+      expect(formatDate('')).toBe('-');
+      expect(formatDate(null)).toBe('-');
+      expect(formatDate(undefined)).toBe('-');
+      expect(formatDate(false as any)).toBe('-');
+      expect(formatDate('invalid-string')).toBe('-');
+    });
+  });
+
+  describe('formatShortDate', () => {
+    it('formats date-only string to DD/MM/YY', () => {
+      const result = formatShortDate('2026-09-02');
+      expect(result).toBe('02/09/26');
+    });
+
+    it('handles falsy values gracefully', () => {
+      expect(formatShortDate('')).toBe('-');
+      expect(formatShortDate(null)).toBe('-');
+      expect(formatShortDate(false as any)).toBe('-');
+    });
   });
 
   describe('formatFullDateTime', () => {
     it('formats a date string correctly to include WIB', () => {
-      // Since jest test environment might use local timezone of the machine running it, 
-      // we check if the result ends with 'WIB' and contains the expected components roughly.
-      // But we can also set process.env.TZ = 'Asia/Jakarta' before testing if needed.
       const result = formatFullDateTime('2026-05-19 10:15:39');
       expect(result).toContain('WIB');
     });
