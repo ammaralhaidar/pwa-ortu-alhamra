@@ -3,7 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Lock } from 'lucide-react';
-import { SESSION_EXPIRED_EVENT, checkSessionStatus } from '@/lib/api';
+import {
+  SESSION_EXPIRED_EVENT,
+  checkSessionStatus,
+  subscribeSessionExpired,
+  resetSessionExpired,
+} from '@/lib/api';
 import { isLoggedIn } from '@/lib/auth';
 
 export default function SessionExpiredModal() {
@@ -12,15 +17,15 @@ export default function SessionExpiredModal() {
   const pathname = usePathname();
 
   useEffect(() => {
-    const handleExpired = () => {
+    const unsubscribe = subscribeSessionExpired((expired) => {
       // Don't show modal if already on login page
       if (pathname === '/login') return;
-      setIsOpen(true);
-    };
+      if (expired) {
+        setIsOpen(true);
+      }
+    });
 
-    window.addEventListener(SESSION_EXPIRED_EVENT, handleExpired);
-
-    // Silent session check when app becomes visible (e.g. user returns to app)
+    // Silent session check ONLY when app returns from background
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && pathname !== '/login' && isLoggedIn()) {
         checkSessionStatus();
@@ -29,19 +34,15 @@ export default function SessionExpiredModal() {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Initial check on mount if user claims to be logged in
-    if (pathname !== '/login' && isLoggedIn()) {
-      checkSessionStatus();
-    }
-
     return () => {
-      window.removeEventListener(SESSION_EXPIRED_EVENT, handleExpired);
+      unsubscribe();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [pathname]);
 
   const handleReLogin = () => {
     setIsOpen(false);
+    resetSessionExpired();
     if (typeof window !== 'undefined') {
       localStorage.removeItem('ibs_pwa_user');
     }
