@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { setUser } from '@/lib/auth';
+import { resetSessionExpired } from '@/lib/api';
 
 const DB = process.env.NEXT_PUBLIC_ODOO_DB || 'db_SIPP';
 
@@ -73,6 +74,7 @@ export default function LoginPage() {
         avatar_128: result.avatar_128 || false,
       });
 
+      resetSessionExpired();
       router.replace('/');
     } catch {
       setError('Koneksi ke server gagal. Coba lagi.');
