@@ -39,7 +39,15 @@ export default function KesantrianPage() {
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--color-bg)' }}>
       <PageHeader title="Kesantrian" showBack={false} />
-      <main className="main-content" style={{ padding: '16px' }}>
+      <main
+        className="main-content"
+        style={{
+          paddingTop: '16px',
+          paddingLeft: '16px',
+          paddingRight: '16px',
+          paddingBottom: 'calc(var(--bottom-nav-height) + 24px + env(safe-area-inset-bottom))',
+        }}
+      >
         <div style={{ background: 'linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)', borderRadius: '18px', padding: '18px 20px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid #BBF7D0' }}>
           <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#16A34A', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <GraduationCap size={24} strokeWidth={1.5} />

@@ -216,7 +216,15 @@ export default function CalonSiswaPage() {
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--color-bg)' }}>
       <PageHeader title="Data Calon Siswa" />
-      <main className="main-content" style={{ padding: '16px', paddingBottom: '100px' }}>
+      <main
+        className="main-content"
+        style={{
+          paddingTop: '16px',
+          paddingLeft: '16px',
+          paddingRight: '16px',
+          paddingBottom: 'calc(var(--bottom-nav-height) + 32px + env(safe-area-inset-bottom))',
+        }}
+      >
         
         {/* Multi-Child Segmented Switcher Tab */}
         {calonList.length > 1 && (

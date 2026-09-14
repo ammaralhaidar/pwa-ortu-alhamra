@@ -2,11 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, ReceiptText } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import BottomNav from "@/components/BottomNav";
 import { getActiveSiswaId } from "@/lib/auth";
 import { formatRupiah, formatDate, formatNumberWithSeparator } from "@/lib/utils";
+
+interface InvoiceLine {
+  id: number;
+  name: string;
+  product_name?: string;
+  quantity: number;
+  price_unit: number;
+  discount?: number;
+  price_subtotal: number;
+}
 
 interface Invoice {
   id: number;
@@ -20,6 +30,7 @@ interface Invoice {
   payment_state: string;
   write_date?: string;
   paid_on?: string | null;
+  lines?: InvoiceLine[];
 }
 
 interface AllocationPreview {
@@ -299,7 +310,11 @@ export default function TagihanPage() {
           paddingRight: "16px",
           paddingTop: "16px",
           paddingBottom:
-            selected.size > 0 && activeTab === "belum_lunas" ? "160px" : "80px",
+            selected.size > 0 && activeTab === "belum_lunas"
+              ? isCicilan
+                ? "calc(var(--bottom-nav-height, 65px) + 240px)"
+                : "calc(var(--bottom-nav-height, 65px) + 160px)"
+              : "calc(var(--bottom-nav-height, 65px) + 24px)",
         }}
       >
         {loading ? (
@@ -347,8 +362,8 @@ export default function TagihanPage() {
                     borderRadius: "16px",
                     padding: "16px",
                     display: "flex",
-                    alignItems: "center",
-                    gap: "14px",
+                    flexDirection: "column",
+                    gap: "12px",
                     cursor: isLunas ? "default" : "pointer",
                     textAlign: "left",
                     width: "100%",
@@ -357,100 +372,157 @@ export default function TagihanPage() {
                       : "0 1px 4px rgba(0,0,0,0.05)",
                   }}
                 >
-                  {!isLunas && (
-                    <div
-                      style={{
-                        width: "22px",
-                        height: "22px",
-                        borderRadius: "6px",
-                        flexShrink: 0,
-                        border: `2px solid ${isChecked ? "var(--color-primary)" : "var(--color-border)"}`,
-                        background: isChecked ? "var(--color-primary)" : "#fff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {isChecked && (
-                        <svg
-                          width="13"
-                          height="13"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="#fff"
-                          strokeWidth="3"
+                  <div style={{ display: "flex", alignItems: "center", gap: "14px", width: "100%" }}>
+                    {!isLunas && (
+                      <div
+                        style={{
+                          width: "22px",
+                          height: "22px",
+                          borderRadius: "6px",
+                          flexShrink: 0,
+                          border: `2px solid ${isChecked ? "var(--color-primary)" : "var(--color-border)"}`,
+                          background: isChecked ? "var(--color-primary)" : "#fff",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {isChecked && (
+                          <svg
+                            width="13"
+                            height="13"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#fff"
+                            strokeWidth="3"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </div>
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <p
+                        style={{
+                          fontWeight: 600,
+                          fontSize: "14px",
+                          color: "var(--color-text-high)",
+                          margin: "0 0 2px",
+                        }}
+                      >
+                        {inv.nama_tagihan || inv.name}
+                      </p>
+                      {inv.komponen_id && (
+                        <p
+                          style={{
+                            fontSize: "11px",
+                            color: "var(--color-primary)",
+                            margin: "0 0 2px",
+                            fontWeight: 600,
+                          }}
                         >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
+                          {inv.komponen_id[1]}
+                        </p>
+                      )}
+                      {inv.payment_state === 'paid' && inv.paid_on && (
+                        <p style={{ fontSize: '11px', color: 'var(--color-accent)', margin: '4px 0 0', fontWeight: 500 }}>
+                          Dibayar pada {formatDate(inv.paid_on)}
+                        </p>
+                      )}
+                      {inv.payment_state === 'partial' && inv.paid_on && (
+                        <p style={{ fontSize: '11px', color: 'var(--color-warning)', margin: '4px 0 0', fontWeight: 500 }}>
+                          Sebagian dibayar pada {formatDate(inv.paid_on)}
+                        </p>
+                      )}
+                      {inv.payment_state !== 'paid' && (inv.invoice_date_due || inv.invoice_date) && (
+                        <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '4px 0 0' }}>
+                          Jatuh tempo: {formatDate(inv.invoice_date_due || inv.invoice_date)}
+                        </p>
                       )}
                     </div>
-                  )}
-                  <div style={{ flex: 1 }}>
-                    <p
+                    <div style={{ textAlign: "right" }}>
+                      <p
+                        style={{
+                          fontWeight: 700,
+                          fontSize: "15px",
+                          color: isLunas
+                            ? "var(--color-accent)"
+                            : "var(--color-danger)",
+                          margin: 0,
+                        }}
+                        className="rupiah"
+                      >
+                        {isLunas
+                          ? formatRupiah(inv.amount_total_signed)
+                          : formatRupiah(inv.amount_residual_signed)}
+                      </p>
+                      {!isLunas && (
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            color: "var(--color-text-low)",
+                          }}
+                        >
+                          dari {formatRupiah(inv.amount_total_signed)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {inv.lines && inv.lines.length > 0 && (
+                    <div
                       style={{
-                        fontWeight: 600,
-                        fontSize: "14px",
-                        color: "var(--color-text-high)",
-                        margin: "0 0 2px",
+                        width: "100%",
+                        background: isChecked ? "rgba(219, 234, 254, 0.6)" : "#F8FAFC",
+                        borderRadius: "10px",
+                        padding: "10px 12px",
+                        border: "1px dashed var(--color-border)",
+                        boxSizing: "border-box",
                       }}
                     >
-                      {inv.nama_tagihan || inv.name}
-                    </p>
-                    {inv.komponen_id && (
                       <p
                         style={{
                           fontSize: "11px",
-                          color: "var(--color-primary)",
-                          margin: "0 0 2px",
-                          fontWeight: 600,
+                          fontWeight: 700,
+                          color: "var(--color-text-medium)",
+                          margin: "0 0 6px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
                         }}
                       >
-                        {inv.komponen_id[1]}
+                        <ReceiptText size={13} strokeWidth={2.2} style={{ color: isChecked ? "var(--color-primary)" : "var(--color-text-medium)", flexShrink: 0 }} />
+                        <span>Rincian Tagihan ({inv.lines.length}):</span>
                       </p>
-                    )}
-                    {inv.payment_state === 'paid' && inv.paid_on && (
-                      <p style={{ fontSize: '11px', color: 'var(--color-accent)', margin: '4px 0 0', fontWeight: 500 }}>
-                        Dibayar pada {formatDate(inv.paid_on)}
-                      </p>
-                    )}
-                    {inv.payment_state === 'partial' && inv.paid_on && (
-                      <p style={{ fontSize: '11px', color: 'var(--color-warning)', margin: '4px 0 0', fontWeight: 500 }}>
-                        Sebagian dibayar pada {formatDate(inv.paid_on)}
-                      </p>
-                    )}
-                    {inv.payment_state !== 'paid' && (inv.invoice_date_due || inv.invoice_date) && (
-                      <p style={{ fontSize: '11px', color: 'var(--color-text-medium)', margin: '4px 0 0' }}>
-                        Jatuh tempo: {formatDate(inv.invoice_date_due || inv.invoice_date)}
-                      </p>
-                    )}
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <p
-                      style={{
-                        fontWeight: 700,
-                        fontSize: "15px",
-                        color: isLunas
-                          ? "var(--color-accent)"
-                          : "var(--color-danger)",
-                        margin: 0,
-                      }}
-                      className="rupiah"
-                    >
-                      {isLunas
-                        ? formatRupiah(inv.amount_total_signed)
-                        : formatRupiah(inv.amount_residual_signed)}
-                    </p>
-                    {!isLunas && (
-                      <span
-                        style={{
-                          fontSize: "10px",
-                          color: "var(--color-text-low)",
-                        }}
-                      >
-                        dari {formatRupiah(inv.amount_total_signed)}
-                      </span>
-                    )}
-                  </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                        {inv.lines.map((line, idx) => (
+                          <div
+                            key={line.id || idx}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "baseline",
+                              fontSize: "12px",
+                              color: "var(--color-text-high)",
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            <span style={{ fontWeight: 500, flex: 1, paddingRight: "8px" }}>
+                              {line.name}
+                              {line.quantity > 1 && (
+                                <span style={{ fontSize: "11px", color: "var(--color-text-medium)", fontWeight: 400 }}>
+                                  {" "}({line.quantity}x @{formatRupiah(line.price_unit)})
+                                </span>
+                              )}
+                            </span>
+                            <span style={{ fontWeight: 600, flexShrink: 0 }} className="rupiah">
+                              {formatRupiah(line.price_subtotal)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </button>
               );
             })}
@@ -481,6 +553,11 @@ export default function TagihanPage() {
               {loadingMore ? 'Memuat...' : 'Tampilkan Lebih Banyak'}
             </button>
           </div>
+        )}
+
+        {/* Bottom spacer to guarantee clearance above sticky checkout bar */}
+        {selected.size > 0 && activeTab === "belum_lunas" && (
+          <div style={{ height: isCicilan ? "80px" : "40px" }} />
         )}
       </main>
 

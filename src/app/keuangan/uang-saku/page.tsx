@@ -177,7 +177,7 @@ export default function UangSakuPage() {
 
       {showTopup && (
         <div onClick={() => { setShowTopup(false); setTopupNominal(''); setTopupNominalInput(''); setCheckoutStep('preview'); setPaymentMethod(null); setConfirmChecked(false); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 60, display: 'flex', alignItems: 'flex-end' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--color-surface)', borderRadius: '24px 24px 0 0', width: '100%', padding: '24px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))', maxHeight: '80dvh', overflowY: 'auto' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--color-surface)', borderRadius: '24px 24px 0 0', width: '100%', padding: '24px 24px calc(24px + env(safe-area-inset-bottom))', maxHeight: '80dvh', overflowY: 'auto' }}>
             <div style={{ width: '36px', height: '4px', background: '#CBD5E1', borderRadius: '2px', margin: '0 auto 20px' }} />
             
             {checkoutStep === 'preview' ? (

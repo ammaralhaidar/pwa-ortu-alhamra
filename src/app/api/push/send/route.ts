@@ -1,5 +1,30 @@
 import { NextResponse } from 'next/server'
 import webpush from 'web-push'
+import dns from 'dns'
+
+// Patch dns.lookup fallback to dns.resolve4 for macOS/sandboxed environments
+if (typeof dns.lookup === 'function' && !(dns as any).__patched) {
+  const originalLookup = dns.lookup.bind(dns)
+  ;(dns as any).lookup = (hostname: string, options: any, callback: any) => {
+    if (typeof options === 'function') {
+      callback = options
+      options = {}
+    }
+    originalLookup(hostname, options, (err: any, address: any, family: any) => {
+      if (err && (err.code === 'ENOTFOUND' || err.code === 'EAI_AGAIN')) {
+        dns.resolve4(hostname, (err2, addresses) => {
+          if (!err2 && addresses && addresses.length > 0) {
+            return callback(null, addresses[0], 4)
+          }
+          return callback(err, address, family)
+        })
+      } else {
+        callback(err, address, family)
+      }
+    })
+  }
+  ;(dns as any).__patched = true
+}
 
 function initVapid() {
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
@@ -51,6 +76,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Subscription expired', code: 'EXPIRED' }, { status: 410 })
     }
     console.error('Push send error:', error)
-    return NextResponse.json({ error: 'Failed to send push' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to send push', message: error?.message, statusCode: error?.statusCode, body: error?.body },
+      { status: error?.statusCode || 500 }
+    )
   }
 }

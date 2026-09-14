@@ -31,7 +31,14 @@ export async function subscribePush(
     })
     return subscription
   } catch (e: any) {
-    console.error('Push subscribe error:', e)
+    if (e?.name === 'AbortError' || e?.message?.includes('push service error')) {
+      console.warn(
+        '[Push Notification] Layanan push dibatasi oleh browser (misal Brave Privacy Shield). ' +
+        'Untuk mengaktifkannya di Brave: buka brave://settings/privacy -> nyalakan "Use Google services for push messaging", lalu restart browser.'
+      )
+    } else {
+      console.warn('[Push Notification] Gagal berlangganan push:', e?.message || e)
+    }
     return null
   }
 }
@@ -52,18 +59,64 @@ export async function sendSubscriptionToServer(subscription: PushSubscription) {
   }
 }
 
-export function showLocalNotification(title: string, body: string, url?: string) {
-  if (!('Notification' in window) || Notification.permission !== 'granted') return
-  navigator.serviceWorker.ready.then((reg) => {
-    const notifOptions: NotificationOptions & { vibrate?: number[] } = {
-      body,
-      icon: '/icon-192x192.png',
-      badge: '/icon-192x192.png',
-      vibrate: [200, 100, 200],
-      data: { url: url || '/' },
+export async function showLocalNotification(
+  title: string,
+  body: string,
+  url?: string
+): Promise<boolean> {
+  if (typeof window === 'undefined' || !('Notification' in window)) {
+    console.warn('[Local Notification] Notification API tidak didukung di browser ini.')
+    return false
+  }
+  if (Notification.permission !== 'granted') {
+    console.warn('[Local Notification] Izin notifikasi belum diberikan:', Notification.permission)
+    return false
+  }
+
+  const notifOptions: NotificationOptions & { vibrate?: number[] } = {
+    body,
+    icon: '/icon-192x192.png',
+    badge: '/icon-192x192.png',
+    vibrate: [200, 100, 200],
+    data: { url: url || '/' },
+  }
+
+  let shown = false
+
+  // 1. Coba tampilkan lewat ServiceWorker dengan timeout 1 detik agar tidak menggantung jika SW pending
+  if ('serviceWorker' in navigator) {
+    try {
+      const reg = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 1000)),
+      ])
+      if (reg && typeof reg.showNotification === 'function') {
+        await reg.showNotification(title, notifOptions)
+        shown = true
+      }
+    } catch (err) {
+      console.warn('[Local Notification] Gagal memicu lewat ServiceWorker, beralih ke Native Notification:', err)
     }
-    reg.showNotification(title, notifOptions)
-  })
+  }
+
+  // 2. Fallback langsung ke konstruktor Notification standar (berfungsi di Desktop macOS/Windows Chrome/Brave/Safari)
+  if (!shown) {
+    try {
+      const notif = new Notification(title, {
+        body,
+        icon: '/icon-192x192.png',
+      })
+      notif.onclick = () => {
+        window.focus()
+        if (url) window.location.href = url
+      }
+      shown = true
+    } catch (err) {
+      console.error('[Local Notification] Gagal menampilkan lewat Notification constructor:', err)
+    }
+  }
+
+  return shown
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {

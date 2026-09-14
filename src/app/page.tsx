@@ -175,7 +175,15 @@ export default function DashboardPage() {
           <div style={{ width: '180px', height: '22px', background: 'rgba(255,255,255,0.3)', borderRadius: '6px', marginBottom: '16px' }} />
           <div style={{ height: '42px', background: 'rgba(255,255,255,0.12)', borderRadius: '12px' }} />
         </header>
-        <main className="main-content" style={{ padding: '16px' }}>
+        <main
+          className="main-content"
+          style={{
+            paddingTop: '16px',
+            paddingLeft: '16px',
+            paddingRight: '16px',
+            paddingBottom: 'calc(var(--bottom-nav-height) + 28px + env(safe-area-inset-bottom))',
+          }}
+        >
           <div style={{ height: '90px', background: 'var(--color-surface)', borderRadius: '16px', border: '1px solid var(--color-border)', marginBottom: '16px', opacity: 0.6 }} />
           <div style={{ height: '140px', background: 'var(--color-surface)', borderRadius: '16px', border: '1px solid var(--color-border)', opacity: 0.6 }} />
         </main>
@@ -281,7 +289,15 @@ export default function DashboardPage() {
         )}
       </header>
 
-      <main className="main-content" style={{ padding: 0 }}>
+      <main
+        className="main-content"
+        style={{
+          paddingTop: 0,
+          paddingLeft: 0,
+          paddingRight: 0,
+          paddingBottom: 'calc(var(--bottom-nav-height) + 28px + env(safe-area-inset-bottom))',
+        }}
+      >
 
         {/* Pengumuman Widget Section */}
         <div style={{ padding: '16px 16px 0' }}>
@@ -833,7 +849,7 @@ export default function DashboardPage() {
       {/* Custom Bottom Sheet Student Selector Modal */}
       {showSiswaModal && (
         <div onClick={() => setShowSiswaModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--color-surface)', borderRadius: '24px 24px 0 0', width: '100%', padding: '24px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))', maxHeight: '80dvh', overflowY: 'auto', boxShadow: '0 -8px 32px rgba(0,0,0,0.15)' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--color-surface)', borderRadius: '24px 24px 0 0', width: '100%', padding: '24px 24px calc(24px + env(safe-area-inset-bottom))', maxHeight: '80dvh', overflowY: 'auto', boxShadow: '0 -8px 32px rgba(0,0,0,0.15)' }}>
             <div style={{ width: '36px', height: '4px', background: '#CBD5E1', borderRadius: '2px', margin: '0 auto 20px' }} />
             
             <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text-high)', marginBottom: '16px', fontFamily: 'Inter, sans-serif' }}>Pilih Anak</h3>

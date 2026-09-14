@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import InstallPrompt from '@/components/InstallPrompt';
-import NotificationInit from '@/components/NotificationInit';
+import NotificationPromptModal from '@/components/NotificationPromptModal';
 import SessionExpiredModal from '@/components/SessionExpiredModal';
 
 export const viewport: Viewport = {
@@ -41,7 +41,7 @@ export default function RootLayout({
         <div className="app-container">
           {children}
           <InstallPrompt />
-          <NotificationInit />
+          <NotificationPromptModal />
           <SessionExpiredModal />
         </div>
       </body>
