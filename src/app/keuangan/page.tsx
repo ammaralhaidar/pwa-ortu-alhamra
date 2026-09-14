@@ -54,7 +54,15 @@ export default function KeuanganPage() {
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--color-bg)' }}>
       <PageHeader title="Keuangan" showBack={false} />
-      <main className="main-content" style={{ padding: '16px' }}>
+      <main
+        className="main-content"
+        style={{
+          paddingTop: '16px',
+          paddingLeft: '16px',
+          paddingRight: '16px',
+          paddingBottom: 'calc(var(--bottom-nav-height) + 24px + env(safe-area-inset-bottom))',
+        }}
+      >
         <div style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)', borderRadius: '18px', padding: '18px 20px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid #BFDBFE' }}>
           <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Wallet size={24} strokeWidth={1.5} />

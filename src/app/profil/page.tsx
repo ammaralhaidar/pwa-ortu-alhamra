@@ -5,11 +5,89 @@ import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
 import { getUser, logout, isCalonOrangtua } from '@/lib/auth';
+import {
+  requestNotificationPermission,
+  registerServiceWorker,
+  subscribePush,
+  sendSubscriptionToServer,
+  showLocalNotification,
+} from '@/lib/push';
 
 export default function ProfilPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>('default');
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [testNotifMsg, setTestNotifMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotifPermission(Notification.permission);
+    } else {
+      setNotifPermission('unsupported');
+    }
+  }, []);
+
+  const handleToggleNotif = async () => {
+    setTestNotifMsg(null);
+    if (notifPermission === 'granted') {
+      setNotifLoading(true);
+      try {
+        const ok = await showLocalNotification(
+          'Uji Coba Notifikasi',
+          'Notifikasi IBS Al Hamra berhasil terhubung dengan perangkat Anda!',
+          '/profil'
+        );
+        if (ok) {
+          setTestNotifMsg({
+            type: 'success',
+            text: 'Perintah notifikasi berhasil dikirim! Jika banner tidak muncul di layar, periksa apakah mode "Jangan Ganggu" (Focus) aktif atau izin browser diizinkan di Pengaturan Sistem macOS (Pengaturan Sistem > Pemberitahuan).',
+          });
+        } else {
+          setTestNotifMsg({
+            type: 'error',
+            text: 'Gagal memicu notifikasi. Pastikan browser mendukung notifikasi.',
+          });
+        }
+      } finally {
+        setNotifLoading(false);
+      }
+      return;
+    }
+    setNotifLoading(true);
+    try {
+      const perm = await requestNotificationPermission();
+      if (perm) setNotifPermission(perm);
+      if (perm === 'granted') {
+        const reg = await registerServiceWorker();
+        if (reg) {
+          const sub = await subscribePush(reg);
+          if (sub) {
+            await sendSubscriptionToServer(sub);
+          }
+        }
+        await showLocalNotification(
+          'Notifikasi Diaktifkan',
+          'Perangkat ini sekarang siap menerima info tagihan dan pengumuman pondok.',
+          '/profil'
+        );
+        setTestNotifMsg({
+          type: 'success',
+          text: 'Notifikasi berhasil diaktifkan!',
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      setTestNotifMsg({
+        type: 'error',
+        text: 'Terjadi kesalahan saat mengaktifkan notifikasi.',
+      });
+    } finally {
+      setNotifLoading(false);
+    }
+  };
+
   const user = mounted ? getUser() : null;
   const isCalon = mounted ? isCalonOrangtua() : false;
   const [showPassForm, setShowPassForm] = useState(false);
@@ -53,7 +131,15 @@ export default function ProfilPage() {
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--color-bg)' }}>
       <PageHeader title="Profil" showBack={false} />
-      <main className="main-content" style={{ padding: '16px' }}>
+      <main
+        className="main-content"
+        style={{
+          paddingTop: '16px',
+          paddingLeft: '16px',
+          paddingRight: '16px',
+          paddingBottom: 'calc(var(--bottom-nav-height) + 24px + env(safe-area-inset-bottom))',
+        }}
+      >
         <div style={{ background: 'var(--color-surface)', borderRadius: '20px', padding: '24px', textAlign: 'center', marginBottom: '16px', border: '1px solid var(--color-border)' }}>
           <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', color: '#fff', fontWeight: 700, margin: '0 auto 12px', overflow: 'hidden' }}>
             {user?.avatar_128 ? (
@@ -67,6 +153,98 @@ export default function ProfilPage() {
           <div style={{ display: 'inline-block', background: '#EFF6FF', color: 'var(--color-primary)', fontSize: '12px', fontWeight: 600, padding: '4px 12px', borderRadius: '20px', marginTop: '10px' }}>
             {isCalon ? 'Calon Wali Santri' : 'Wali Santri'}
           </div>
+        </div>
+
+        {/* Card Notifikasi */}
+        <div style={{ background: 'var(--color-surface)', borderRadius: '16px', marginBottom: '12px', border: '1px solid var(--color-border)', padding: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '20px' }}>🔔</span>
+              <div>
+                <span style={{ fontWeight: 600, fontSize: '15px', color: 'var(--color-text-high)' }}>Notifikasi Push</span>
+                <p style={{ fontSize: '12px', color: 'var(--color-text-medium)', margin: '2px 0 0', lineHeight: 1.35 }}>
+                  {notifPermission === 'granted'
+                    ? 'Perangkat aktif menerima notifikasi tagihan & info.'
+                    : notifPermission === 'denied'
+                    ? 'Notifikasi diblokir di setelan browser HP Anda.'
+                    : notifPermission === 'unsupported'
+                    ? 'Browser ini tidak mendukung notifikasi push.'
+                    : 'Aktifkan agar tidak ketinggalan tagihan & pengumuman.'}
+                </p>
+              </div>
+            </div>
+            <div style={{ flexShrink: 0 }}>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '4px 10px',
+                  borderRadius: '12px',
+                  background:
+                    notifPermission === 'granted'
+                      ? '#DCFCE7'
+                      : notifPermission === 'denied'
+                      ? '#FEE2E2'
+                      : '#F1F5F9',
+                  color:
+                    notifPermission === 'granted'
+                      ? '#16A34A'
+                      : notifPermission === 'denied'
+                      ? '#DC2626'
+                      : 'var(--color-text-medium)',
+                }}
+              >
+                {notifPermission === 'granted'
+                  ? 'Aktif'
+                  : notifPermission === 'denied'
+                  ? 'Diblokir'
+                  : notifPermission === 'unsupported'
+                  ? 'Tidak Didukung'
+                  : 'Belum Aktif'}
+              </span>
+            </div>
+          </div>
+          {notifPermission !== 'unsupported' && notifPermission !== 'denied' && (
+            <button
+              onClick={handleToggleNotif}
+              disabled={notifLoading}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                marginTop: '12px',
+                background: notifPermission === 'granted' ? '#F8FAFC' : 'var(--color-primary)',
+                color: notifPermission === 'granted' ? 'var(--color-primary)' : '#ffffff',
+                border: notifPermission === 'granted' ? '1px solid var(--color-border)' : 'none',
+                borderRadius: '10px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: notifLoading ? 'not-allowed' : 'pointer',
+                fontFamily: 'Inter, sans-serif',
+              }}
+            >
+              {notifLoading
+                ? 'Memproses...'
+                : notifPermission === 'granted'
+                ? '🔔 Kirim Tes Notifikasi ke HP'
+                : 'Aktifkan Notifikasi Sekarang'}
+            </button>
+          )}
+          {testNotifMsg && (
+            <div
+              style={{
+                marginTop: '10px',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                fontSize: '12px',
+                lineHeight: 1.4,
+                background: testNotifMsg.type === 'success' ? '#F0FDF4' : '#FEF2F2',
+                color: testNotifMsg.type === 'success' ? '#166534' : '#991B1B',
+                border: `1px solid ${testNotifMsg.type === 'success' ? '#BBF7D0' : '#FECACA'}`,
+              }}
+            >
+              {testNotifMsg.text}
+            </div>
+          )}
         </div>
 
         <div style={{ background: 'var(--color-surface)', borderRadius: '16px', marginBottom: '12px', border: '1px solid var(--color-border)', overflow: 'hidden' }}>

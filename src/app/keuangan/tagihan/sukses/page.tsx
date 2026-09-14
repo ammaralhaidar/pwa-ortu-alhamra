@@ -31,22 +31,26 @@ function SuksesContent() {
     (async () => {
       try {
         const perm = await requestNotificationPermission();
-        if (perm !== 'granted') return;
+        if (perm === 'granted') {
+          const formattedTotal = total ? formatRupiah(total) : '';
+          const title = kodeBayar ? `Kode Bayar: ${kodeBayar} (${formattedTotal})` : 'Kode Bayar Berhasil Dibuat';
+          const body = expired
+            ? `Harap selesaikan pembayaran sebelum ${formatFullDateTime(expired)}.`
+            : 'Segera selesaikan pembayaran sebelum batas waktu.';
 
-        const reg = await registerServiceWorker();
-        if (!reg) return;
+          await showLocalNotification(title, body, '/keuangan/menunggu-pembayaran');
 
-        const sub = await subscribePush(reg);
-        if (sub) {
-          await sendSubscriptionToServer(sub);
+          // Coba sinkronisasi langganan push di latar belakang
+          const reg = await registerServiceWorker();
+          if (reg) {
+            const sub = await subscribePush(reg);
+            if (sub) {
+              await sendSubscriptionToServer(sub);
+            }
+          }
         }
-
-        showLocalNotification(
-          'Kode Bayar Berhasil Dibuat',
-          'Segera selesaikan pembayaran sebelum batas waktu.'
-        );
       } catch (e: any) {
-        console.error('Push setup error:', e);
+        console.warn('Push setup error:', e);
       }
     })();
   }, []);
@@ -64,7 +68,7 @@ function SuksesContent() {
       <style>{`@keyframes bounceIn { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }`}</style>
     <div style={{ minHeight: '100dvh', background: 'var(--color-bg)' }}>
       <PageHeader title="Menunggu Pembayaran" />
-      <main style={{ padding: '16px', paddingBottom: '32px' }}>
+      <main style={{ paddingTop: '16px', paddingLeft: '16px', paddingRight: '16px', paddingBottom: '32px' }}>
         {/* Success Banner */}
         <div style={{
           background: 'linear-gradient(135deg, var(--color-primary) 0%, #0f3659 100%)',

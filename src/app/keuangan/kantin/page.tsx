@@ -50,7 +50,15 @@ export default function KantinPage() {
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--color-bg)' }}>
       <PageHeader title="Transaksi Kantin" />
-      <main className="main-content" style={{ padding: '16px', paddingBottom: '80px' }}>
+      <main
+        className="main-content"
+        style={{
+          paddingTop: '16px',
+          paddingLeft: '16px',
+          paddingRight: '16px',
+          paddingBottom: 'calc(var(--bottom-nav-height) + 24px + env(safe-area-inset-bottom))',
+        }}
+      >
         {loading ? (
           <p style={{ textAlign: 'center', color: 'var(--color-text-medium)', marginTop: '40px' }}>Memuat...</p>
         ) : orders.length === 0 ? (
