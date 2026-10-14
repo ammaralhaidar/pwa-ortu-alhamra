@@ -25,7 +25,12 @@ export default function SessionExpiredModal() {
       }
     });
 
-    // Silent session check ONLY when app returns from background
+    // Check session immediately on mount if logged in
+    if (pathname !== '/login' && isLoggedIn()) {
+      checkSessionStatus();
+    }
+
+    // Silent session check when app returns from background
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && pathname !== '/login' && isLoggedIn()) {
         checkSessionStatus();
@@ -45,6 +50,12 @@ export default function SessionExpiredModal() {
     resetSessionExpired();
     if (typeof window !== 'undefined') {
       localStorage.removeItem('ibs_pwa_user');
+      localStorage.removeItem('ibs_cached_siswas');
+      Object.keys(localStorage).forEach((k) => {
+        if (k.startsWith('ibs_cached_dashboard')) {
+          localStorage.removeItem(k);
+        }
+      });
     }
     router.replace('/login');
   };
