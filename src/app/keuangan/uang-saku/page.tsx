@@ -7,6 +7,7 @@ import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
 import { getActiveSiswaId } from '@/lib/auth';
 import { formatRupiah, formatDate, formatNumberWithSeparator } from '@/lib/utils';
+import { apiFetch, isSessionExpired } from '@/lib/api';
 
 interface UangSakuSaldo { saldo_uang_saku: number; saldo_dompet_kantin: number; }
 
@@ -40,20 +41,18 @@ export default function UangSakuPage() {
     if (pageNum === 1) setLoading(true);
     else setLoadingMore(true);
 
-    const overviewUrl = `/odoo/api/v1/dashboard/overview?siswa_id=${siswaId}`;
-    
     const promises: Promise<any>[] = [
-      fetch(`/odoo/api/v1/siswa/${siswaId}/uang_saku?limit=15&page=${pageNum}`, { credentials: 'include' }).then(r => r.json())
+      apiFetch<{ success: boolean; data: any[]; pagination?: any }>(`/api/v1/siswa/${siswaId}/uang_saku?limit=15&page=${pageNum}`)
     ];
     
     if (pageNum === 1) {
-      promises.push(fetch(overviewUrl, { credentials: 'include' }).then(r => r.json()));
+      promises.push(apiFetch<{ success: boolean; data: { overview_keuangan: UangSakuSaldo } }>(`/api/v1/dashboard/overview?siswa_id=${siswaId}`));
     }
 
     Promise.all(promises)
       .then((results) => {
         const txData = results[0];
-        if (txData.success) {
+        if (txData?.success) {
           setTransaksi(prev => pageNum === 1 ? txData.data : [...prev, ...txData.data]);
           if (txData.pagination) setHasMore(pageNum < txData.pagination.total_pages);
           else setHasMore(false);
@@ -61,7 +60,7 @@ export default function UangSakuPage() {
         
         if (pageNum === 1 && results[1]) {
           const ovData = results[1];
-          if (ovData.success) setSaldo(ovData.data?.overview_keuangan);
+          if (ovData?.success) setSaldo(ovData.data?.overview_keuangan);
         }
       })
       .catch(() => {})
@@ -76,31 +75,48 @@ export default function UangSakuPage() {
     if (!siswaId || !topupNominal || Number(topupNominal) <= 0) return;
     setSubmitting(true);
     try {
-      const res = await fetch('/odoo/api/v1/uang-saku/topup', {
-        method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ params: { siswa_id: siswaId, nominal: Number(topupNominal), metode: paymentMethod === 'lainnya' ? 'lain' : 'bsi' } }),
+      const data = await apiFetch<{
+        success: boolean;
+        data: {
+          nomor_va: string;
+          kode_bayar: string;
+          total_bayar: number;
+          biaya_admin: number;
+          batas_waktu: string;
+        };
+        error?: string;
+      }>('/api/v1/uang-saku/topup', {
+        method: 'POST',
+        body: JSON.stringify({
+          params: {
+            siswa_id: siswaId,
+            nominal: Number(topupNominal),
+            metode: paymentMethod === 'lainnya' ? 'lain' : 'bsi'
+          }
+        }),
       });
-      if (res.status === 401) {
-        alert('Sesi login Anda telah berakhir. Silakan login kembali.');
-        router.push('/login');
-        return;
-      }
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        alert('Sesi login Anda telah berakhir. Silakan login kembali.');
-        router.push('/login');
-        return;
-      }
-      if (data.success) {
-        router.push('/keuangan/tagihan/sukses?' + new URLSearchParams({ va: data.data.nomor_va, kode_bayar: data.data.kode_bayar, total: String(data.data.total_bayar), admin: String(data.data.biaya_admin), expired: data.data.batas_waktu, metode: paymentMethod || 'bsi' }).toString());
+
+      if (data?.success && data?.data) {
+        router.push('/keuangan/tagihan/sukses?' + new URLSearchParams({
+          va: data.data.nomor_va,
+          kode_bayar: data.data.kode_bayar,
+          total: String(data.data.total_bayar),
+          admin: String(data.data.biaya_admin),
+          expired: data.data.batas_waktu,
+          metode: paymentMethod || 'bsi'
+        }).toString());
       } else {
-        alert(data.error || 'Gagal membuat kode top up.');
+        alert(data?.error || 'Gagal membuat kode top up.');
       }
-    } catch { alert('Terjadi kesalahan koneksi. Silakan periksa jaringan internet Anda.'); }
-    finally { setSubmitting(false); }
+    } catch (err: any) {
+      if (isSessionExpired() || err?.message?.includes('Sesi Anda telah berakhir')) {
+        // Modal SessionExpiredModal akan muncul otomatis tanpa alert yang membingungkan
+        return;
+      }
+      alert(err?.message || 'Terjadi kesalahan saat memproses top up.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

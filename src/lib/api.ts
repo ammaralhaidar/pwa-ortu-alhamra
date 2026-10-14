@@ -69,7 +69,11 @@ if (typeof window !== 'undefined' && !(window as any).__ibsFetchInterceptionActi
             const json = await clone.json();
             if (
               json?.error === 'session_expired' ||
+              json?.error === 'Session Expired' ||
+              json?.code === 401 ||
+              (json?.status === 'error' && json?.code === 401) ||
               json?.error?.code === 100 ||
+              json?.error?.code === 401 ||
               (typeof json?.error?.message === 'string' && json.error.message.toLowerCase().includes('session expired'))
             ) {
               notifySessionExpired();
@@ -194,11 +198,11 @@ export async function apiPost<T = unknown>(
   });
 }
 
-// Silent session check for visibility change (resume from background)
+// Silent session check for visibility change / app mount
 export async function checkSessionStatus(): Promise<boolean> {
   if (typeof window === 'undefined') return true;
   try {
-    const res = await fetch(`${ODOO_PROXY}/api/v1/siswa/list`, {
+    const res = await fetch(`${ODOO_PROXY}/api/v1/session/status`, {
       method: 'GET',
       credentials: 'include',
       headers: { Accept: 'application/json' },
@@ -214,6 +218,12 @@ export async function checkSessionStatus(): Promise<boolean> {
     if (contentType.includes('text/html')) {
       const text = await res.text().catch(() => '');
       if (text.includes('/web/login') || text.includes('csrf_token') || res.url.includes('/web/login')) {
+        notifySessionExpired();
+        return false;
+      }
+    } else if (contentType.includes('application/json')) {
+      const data = await res.json().catch(() => null);
+      if (data && data.authenticated === false) {
         notifySessionExpired();
         return false;
       }

@@ -27,7 +27,7 @@ import {
   markPengumumanAsRead,
   isPengumumanRead,
 } from '@/lib/pengumuman';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, notifySessionExpired, isSessionExpired } from '@/lib/api';
 
 interface DashboardData {
   siswa_info: { id: number; name: string };
@@ -73,6 +73,28 @@ export default function DashboardPage() {
     setReadIds(getReadPengumumanIds());
     loadPengumuman();
     if (!user) { router.replace('/login'); return; }
+
+    // Pre-hydrate from cache if available to prevent "Memuat..." and Rp 0 screen
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedSiswasStr = localStorage.getItem('ibs_cached_siswas');
+        if (cachedSiswasStr) {
+          const parsed = JSON.parse(cachedSiswasStr);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setSiswas(parsed);
+            const initialActive = getActiveSiswaId() || parsed[0].id;
+            setActiveSiswaId(initialActive);
+            const cachedDashStr = localStorage.getItem(`ibs_cached_dashboard_${initialActive}`);
+            if (cachedDashStr) {
+              setDashboard(JSON.parse(cachedDashStr));
+            }
+          }
+        }
+      } catch {
+        // ignore cache parse errors
+      }
+    }
+
     if (isCalonOrangtua()) {
       fetchCalonSiswaList();
       return;
@@ -122,6 +144,11 @@ export default function DashboardPage() {
       const data = await apiFetch<{ success: boolean; data: SiswaOption[] }>('/api/v1/siswa/list');
       if (data?.success && data?.data?.length) {
         setSiswas(data.data);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('ibs_cached_siswas', JSON.stringify(data.data));
+          } catch {}
+        }
         const activeId = getActiveSiswaId() || data.data[0].id;
         setActiveSiswaId(activeId);
         updateActiveSiswa(activeId);
@@ -129,8 +156,20 @@ export default function DashboardPage() {
       } else {
         fetchDashboard(null);
       }
-    } catch {
-      fetchDashboard(null);
+    } catch (err: any) {
+      if (err?.message?.includes('Sesi Anda telah berakhir') || isSessionExpired()) {
+        notifySessionExpired();
+      }
+      const currActive = getActiveSiswaId() || activeSiswaId;
+      if (currActive && typeof window !== 'undefined') {
+        try {
+          const cachedDash = localStorage.getItem(`ibs_cached_dashboard_${currActive}`);
+          if (cachedDash) {
+            setDashboard(JSON.parse(cachedDash));
+          }
+        } catch {}
+      }
+      setLoading(false);
     }
   }
 
@@ -141,9 +180,29 @@ export default function DashboardPage() {
         ? `/api/v1/dashboard/overview?siswa_id=${siswaId}`
         : `/api/v1/dashboard/overview`;
       const data = await apiFetch<{ success: boolean; data: DashboardData }>(path);
-      if (data?.success) setDashboard(data.data);
-    } catch { /* session expired or error handled */ }
-    finally { setLoading(false); }
+      if (data?.success && data?.data) {
+        setDashboard(data.data);
+        if (siswaId && typeof window !== 'undefined') {
+          try {
+            localStorage.setItem(`ibs_cached_dashboard_${siswaId}`, JSON.stringify(data.data));
+          } catch {}
+        }
+      }
+    } catch (err: any) {
+      if (err?.message?.includes('Sesi Anda telah berakhir') || isSessionExpired()) {
+        notifySessionExpired();
+      }
+      if (siswaId && typeof window !== 'undefined') {
+        try {
+          const cachedDash = localStorage.getItem(`ibs_cached_dashboard_${siswaId}`);
+          if (cachedDash && !dashboard) {
+            setDashboard(JSON.parse(cachedDash));
+          }
+        } catch {}
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSiswaChange = (siswaId: number) => {
