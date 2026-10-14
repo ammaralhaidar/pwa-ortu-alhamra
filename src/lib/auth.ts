@@ -96,8 +96,7 @@ export function isLoggedIn(): boolean {
 
 export async function logout(): Promise<void> {
   try {
-    const odooUrl = process.env.NEXT_PUBLIC_ODOO_URL || 'http://localhost:10016';
-    await fetch(`${odooUrl}/api/v1/session/logout`, {
+    await fetch('/odoo/api/v1/session/logout', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -108,6 +107,12 @@ export async function logout(): Promise<void> {
   } finally {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(USER_KEY);
+      localStorage.removeItem('ibs_cached_siswas');
+      Object.keys(localStorage).forEach((k) => {
+        if (k.startsWith('ibs_cached_dashboard')) {
+          localStorage.removeItem(k);
+        }
+      });
     }
   }
 }
