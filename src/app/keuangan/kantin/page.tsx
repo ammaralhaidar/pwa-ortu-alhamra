@@ -5,6 +5,7 @@ import PageHeader from '@/components/PageHeader';
 import BottomNav from '@/components/BottomNav';
 import { getActiveSiswaId } from '@/lib/auth';
 import { formatRupiah, formatDateTime } from '@/lib/utils';
+import { apiFetch } from '@/lib/api';
 
 export default function KantinPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -18,27 +19,31 @@ export default function KantinPage() {
     fetchData(1);
   }, []);
 
-  const fetchData = (pageNum: number) => {
+  const fetchData = async (pageNum: number) => {
     const siswaId = getActiveSiswaId();
     if (!siswaId) { setLoading(false); return; }
     
     if (pageNum === 1) setLoading(true);
     else setLoadingMore(true);
 
-    fetch(`/odoo/api/v1/siswa/${siswaId}/transaksi_kantin?limit=15&page=${pageNum}`, { credentials: 'include' })
-      .then(r => r.json())
-      .then(d => {
-        if (d.success) {
-          setOrders(prev => pageNum === 1 ? d.data : [...prev, ...d.data]);
-          if (d.pagination) setHasMore(pageNum < d.pagination.total_pages);
-          else setHasMore(false);
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        setLoading(false);
-        setLoadingMore(false);
-      });
+    try {
+      const d = await apiFetch<{
+        success: boolean;
+        data: any[];
+        pagination?: { total_pages: number };
+      }>(`/api/v1/siswa/${siswaId}/transaksi_kantin?limit=15&page=${pageNum}`);
+
+      if (d?.success && d?.data) {
+        setOrders(prev => pageNum === 1 ? d.data : [...prev, ...d.data]);
+        if (d.pagination) setHasMore(pageNum < d.pagination.total_pages);
+        else setHasMore(false);
+      }
+    } catch {
+      // Session expired is handled automatically by apiFetch & SessionExpiredModal
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
   };
 
   const toggle = (id: number) => {
